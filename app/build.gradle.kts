@@ -40,7 +40,7 @@ android {
 val downloadCinFiles by tasks.registering {
     description = "Downloads Array30 .cin dictionary files from gontera/array30 into assets."
     val assetsDir = layout.projectDirectory.dir("src/main/assets")
-    val baseUrl = "https://raw.githubusercontent.com/gontera/array30/master/OpenVanilla"
+    val baseUrl = "https://raw.githubusercontent.com/gontera/array30/v2023-1.0-20230211/OpenVanilla"
     val cinFiles = listOf(
         "array30-OpenVanilla-big-v2023-1.0-20230211.cin",
         "array-shortcode-20210725.cin",
