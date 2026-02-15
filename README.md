@@ -22,7 +22,16 @@ An Android Input Method Editor (IME) for the Array 30 Input Method (行列30輸�
 3. Build and install the app
 4. Enable "JustArray" (就是行列) in Settings → Language & Input → On-screen keyboard
 
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
+
+The `.cin` dictionary files in `app/src/main/assets/` are licensed separately under the
+[Array Input Method Public License](https://array.com.tw/company/array_license.pdf).
+These files are sourced from the [gontera/array30](https://github.com/gontera/array30)
+repository (tag `v2023-1.0-20230211`).
+
 ## Acknowledgements
 
 - **Array Input Method** was created by **廖明德 (Liao Ming-De)**
-- Dictionary data is from the [gontera/array30](https://github.com/gontera/array30) repository, which provides OpenVanilla `.cin` format dictionary files authorized for free distribution for third-party IME developers
+- Dictionary data is from the [gontera/array30](https://github.com/gontera/array30) repository, which provides OpenVanilla `.cin` format dictionary files under the Array Input Method Public License
