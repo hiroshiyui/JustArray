@@ -189,6 +189,7 @@ fun KeyboardScreen(
             Spacer(modifier = Modifier.height(6.dp))
 
             // Keyboard content
+            val shiftState = (state as? InputState.EnglishMode)?.shiftState ?: ShiftState.NONE
             when (state) {
                 is InputState.SymbolMode -> {
                     SymbolKeyboard(
@@ -201,8 +202,10 @@ fun KeyboardScreen(
                     )
                 }
                 else -> {
+                    val isUppercase = state !is InputState.EnglishMode || shiftState != ShiftState.NONE
                     ArrayKeyboard(
                         showArrayLabels = showArrayLabels,
+                        isUppercase = isUppercase,
                         isLandscape = isLandscape,
                         onKeyPress = { char ->
                             onKeyPress()
@@ -227,7 +230,6 @@ fun KeyboardScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             // Function row
-            val shiftState = (state as? InputState.EnglishMode)?.shiftState ?: ShiftState.NONE
             FunctionRow(
                 isEnglishMode = state is InputState.EnglishMode,
                 shiftState = shiftState,

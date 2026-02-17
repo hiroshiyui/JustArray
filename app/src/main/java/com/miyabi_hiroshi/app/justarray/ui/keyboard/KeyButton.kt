@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 fun KeyButton(
     keyDef: KeyDefinition,
     showArrayLabel: Boolean = true,
+    isUppercase: Boolean = true,
     accessibilityLabel: String = keyDef.displayChar,
     keyHeight: Dp? = null,
     onSwipeUp: (() -> Unit)? = null,
@@ -62,6 +63,7 @@ fun KeyButton(
     val colors = KeyboardTheme.current
     val backgroundColor = if (isPressed) colors.keyPressedBackground else colors.keyBackground
 
+    val displayLabel = if (isUppercase) keyDef.displayChar else keyDef.displayChar.lowercase()
     val alternates = KeyboardLayout.KEY_ALTERNATES[keyDef.qwertyChar] ?: emptyList()
 
     val density = LocalDensity.current
@@ -174,7 +176,7 @@ fun KeyButton(
         }
         // Main character label
         Text(
-            text = keyDef.displayChar,
+            text = displayLabel,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             color = colors.keyTextColor,
@@ -196,7 +198,7 @@ fun KeyButton(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = keyDef.displayChar,
+                        text = displayLabel,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.keyTextColor,

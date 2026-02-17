@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Dp
 @Composable
 fun ArrayKeyboard(
     showArrayLabels: Boolean = true,
+    isUppercase: Boolean = true,
     isLandscape: Boolean = false,
     onKeyPress: (Char) -> Unit,
     onNumberPress: (Int) -> Unit = {},
@@ -31,13 +32,13 @@ fun ArrayKeyboard(
     ) {
         NumberRow(onNumberPress = onNumberPress, keyHeight = keyHeight)
         if (isLandscape) {
-            SplitKeyRow(keys = KeyboardLayout.TOP_ROW, showArrayLabels = showArrayLabels, keyHeight = keyHeight, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
-            SplitKeyRow(keys = KeyboardLayout.MIDDLE_ROW, showArrayLabels = showArrayLabels, keyHeight = keyHeight, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
-            SplitKeyRow(keys = KeyboardLayout.BOTTOM_ROW, showArrayLabels = showArrayLabels, keyHeight = keyHeight, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
+            SplitKeyRow(keys = KeyboardLayout.TOP_ROW, showArrayLabels = showArrayLabels, isUppercase = isUppercase, keyHeight = keyHeight, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
+            SplitKeyRow(keys = KeyboardLayout.MIDDLE_ROW, showArrayLabels = showArrayLabels, isUppercase = isUppercase, keyHeight = keyHeight, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
+            SplitKeyRow(keys = KeyboardLayout.BOTTOM_ROW, showArrayLabels = showArrayLabels, isUppercase = isUppercase, keyHeight = keyHeight, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
         } else {
-            KeyRow(keys = KeyboardLayout.TOP_ROW, showArrayLabels = showArrayLabels, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
-            KeyRow(keys = KeyboardLayout.MIDDLE_ROW, showArrayLabels = showArrayLabels, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
-            KeyRow(keys = KeyboardLayout.BOTTOM_ROW, showArrayLabels = showArrayLabels, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
+            KeyRow(keys = KeyboardLayout.TOP_ROW, showArrayLabels = showArrayLabels, isUppercase = isUppercase, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
+            KeyRow(keys = KeyboardLayout.MIDDLE_ROW, showArrayLabels = showArrayLabels, isUppercase = isUppercase, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
+            KeyRow(keys = KeyboardLayout.BOTTOM_ROW, showArrayLabels = showArrayLabels, isUppercase = isUppercase, onKeyPress = onKeyPress, onSwipeUp = onSwipeUp, onAlternateSelected = onAlternateSelected)
         }
     }
 }
@@ -69,6 +70,7 @@ private fun NumberRow(
 private fun KeyRow(
     keys: List<KeyDefinition>,
     showArrayLabels: Boolean,
+    isUppercase: Boolean,
     onKeyPress: (Char) -> Unit,
     onSwipeUp: ((Char) -> Unit)? = null,
     onAlternateSelected: ((String) -> Unit)? = null,
@@ -81,6 +83,7 @@ private fun KeyRow(
             KeyButton(
                 keyDef = key,
                 showArrayLabel = showArrayLabels,
+                isUppercase = isUppercase,
                 onSwipeUp = onSwipeUp?.let { callback -> { callback(key.qwertyChar) } },
                 onAlternateSelected = onAlternateSelected,
                 modifier = Modifier.weight(1f),
@@ -94,6 +97,7 @@ private fun KeyRow(
 private fun SplitKeyRow(
     keys: List<KeyDefinition>,
     showArrayLabels: Boolean,
+    isUppercase: Boolean,
     keyHeight: Dp?,
     onKeyPress: (Char) -> Unit,
     onSwipeUp: ((Char) -> Unit)? = null,
@@ -115,6 +119,7 @@ private fun SplitKeyRow(
                 KeyButton(
                     keyDef = key,
                     showArrayLabel = showArrayLabels,
+                    isUppercase = isUppercase,
                     keyHeight = keyHeight,
                     onSwipeUp = onSwipeUp?.let { callback -> { callback(key.qwertyChar) } },
                     onAlternateSelected = onAlternateSelected,
@@ -135,6 +140,7 @@ private fun SplitKeyRow(
                 KeyButton(
                     keyDef = key,
                     showArrayLabel = showArrayLabels,
+                    isUppercase = isUppercase,
                     keyHeight = keyHeight,
                     onSwipeUp = onSwipeUp?.let { callback -> { callback(key.qwertyChar) } },
                     onAlternateSelected = onAlternateSelected,
