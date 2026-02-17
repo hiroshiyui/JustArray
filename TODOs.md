@@ -18,6 +18,6 @@
 
 ## Testing
 
-- [ ] Add tests for `DictionaryRepository.lookup()` priority and deduplication logic (special → short → main)
-- [ ] Add trie serialization round-trip test (`TrieSerializer`)
-- [ ] Add multi-step state machine integration tests (compose → select → continue composing → commit)
+- [x] Add tests for `DictionaryRepository.lookup()` priority and deduplication logic (special → short → main)
+- [x] Add trie serialization round-trip test (`TrieSerializer`)
+- [x] Add multi-step state machine integration tests (compose → select → continue composing → commit)

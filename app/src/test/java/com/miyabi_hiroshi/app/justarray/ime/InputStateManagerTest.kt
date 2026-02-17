@@ -432,6 +432,141 @@ class InputStateManagerTest {
         assertEquals("s", composingState.keys)
     }
 
+    // --- Multi-step integration tests ---
+
+    @Test
+    fun `compose select continue composing then commit via enter`() {
+        // Step 1: Type "a" → Composing with candidates [甲, 乙, 丙]
+        manager.onArrayKey('a')
+        assertTrue(manager.state.value is InputState.Composing)
+
+        // Step 2: Space → Selecting
+        manager.onSpaceKey()
+        assertTrue(manager.state.value is InputState.Selecting)
+
+        // Step 3: Select candidate 1 (甲) → Composing with preEditBuffer="甲"
+        manager.onCandidateSelected(0)
+        val afterSelect = manager.state.value as InputState.Composing
+        assertEquals("甲", afterSelect.preEditBuffer)
+        assertEquals("", afterSelect.keys)
+
+        // Step 4: Type more keys "a" "s" → Composing with preEditBuffer="甲", keys="as"
+        manager.onArrayKey('a')
+        manager.onArrayKey('s')
+        val afterMoreKeys = manager.state.value as InputState.Composing
+        assertEquals("甲", afterMoreKeys.preEditBuffer)
+        assertEquals("as", afterMoreKeys.keys)
+
+        // Step 5: Space with single candidate "明" → auto-adds to preEditBuffer
+        manager.onSpaceKey()
+        val afterAutoSelect = manager.state.value as InputState.Composing
+        assertEquals("甲明", afterAutoSelect.preEditBuffer)
+        assertEquals("", afterAutoSelect.keys)
+
+        // Step 6: Enter commits the full pre-edit buffer
+        committed.clear()
+        manager.onEnterKey()
+        assertTrue(committed.contains("甲明"))
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
+    @Test
+    fun `compose select via number then type next key auto-selects first`() {
+        // Type "a", space → Selecting [甲, 乙, 丙]
+        manager.onArrayKey('a')
+        manager.onSpaceKey()
+
+        // Select 乙 via number key 2
+        manager.onNumberKey(2)
+        val afterNumber = manager.state.value as InputState.Composing
+        assertEquals("乙", afterNumber.preEditBuffer)
+
+        // Type next key while in Composing with pre-edit
+        manager.onArrayKey('a')
+        manager.onSpaceKey() // → Selecting again
+
+        // Now type another array key → auto-selects first candidate and starts new composition.
+        // First candidate is "乙" (not "甲") because the earlier selection boosted its frequency.
+        manager.onArrayKey('a')
+        val afterAutoSelect = manager.state.value as InputState.Composing
+        assertEquals("乙乙", afterAutoSelect.preEditBuffer)
+        assertEquals("a", afterAutoSelect.keys)
+    }
+
+    @Test
+    fun `compose backspace through pre-edit buffer to idle`() {
+        // Build up pre-edit: type "asdf" → single candidate "晦" auto-selected
+        manager.onArrayKey('a')
+        manager.onArrayKey('s')
+        manager.onArrayKey('d')
+        manager.onArrayKey('f')
+        manager.onSpaceKey() // "晦" in preEditBuffer
+
+        val afterSpace = manager.state.value as InputState.Composing
+        assertEquals("晦", afterSpace.preEditBuffer)
+        assertEquals("", afterSpace.keys)
+
+        // Backspace removes last char from preEditBuffer
+        manager.onBackspaceKey()
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
+    @Test
+    fun `compose select paginate then select from page 2`() {
+        // "fg" has 25 candidates → 3 pages
+        manager.onArrayKey('f')
+        manager.onArrayKey('g')
+        manager.onSpaceKey() // → Selecting
+
+        // Go to page 2
+        manager.nextPage()
+        assertEquals(1, (manager.state.value as InputState.Selecting).page)
+
+        // Select candidate 1 on page 2 (index 0 on page 2 = absolute index 10 = "字11")
+        manager.onCandidateSelected(0)
+
+        val state = manager.state.value as InputState.Composing
+        assertEquals("字11", state.preEditBuffer)
+    }
+
+    @Test
+    fun `compose reset with pre-edit commits pre-edit then idle`() {
+        // Build pre-edit, then start composing more
+        manager.onArrayKey('a')
+        manager.onArrayKey('s')
+        manager.onArrayKey('d')
+        manager.onArrayKey('f')
+        manager.onSpaceKey() // "晦" in pre-edit
+        manager.onArrayKey('a') // start composing "a"
+
+        committed.clear()
+        manager.reset()
+
+        assertTrue(committed.contains("晦"))
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
+    @Test
+    fun `full workflow compose select compose select enter`() {
+        // First character: type "a", space, select 丙 (index 2)
+        manager.onArrayKey('a')
+        manager.onSpaceKey()
+        manager.onCandidateSelected(2)
+        assertEquals("丙", (manager.state.value as InputState.Composing).preEditBuffer)
+
+        // Second character: type "as" → single candidate "明", space auto-selects
+        manager.onArrayKey('a')
+        manager.onArrayKey('s')
+        manager.onSpaceKey()
+        assertEquals("丙明", (manager.state.value as InputState.Composing).preEditBuffer)
+
+        // Commit with Enter
+        committed.clear()
+        manager.onEnterKey()
+        assertTrue(committed.contains("丙明"))
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
     /** Minimal fake DAO for tests. */
     private class FakeDictionaryDao : DictionaryDao {
         override fun lookupExact(code: String) = emptyList<DictionaryEntry>()
