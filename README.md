@@ -46,13 +46,8 @@ Requires Android 7.0 (API 24) or later.
 
 ## Setup
 
-1. Download `.cin` dictionary files from [gontera/array30](https://github.com/gontera/array30)
-2. Place the following files in `app/src/main/assets/`:
-   - `array30-OpenVanilla-big-v2023-1.0-20230211.cin` (main dictionary)
-   - `array-shortcode-20210725.cin` (short codes)
-   - `array-special-201509.cin` (special codes)
-3. Build and install the app
-4. Enable "JustArray" (就是行列) in Settings → Language & Input → On-screen keyboard
+1. Build and install the app (dictionary files are downloaded automatically during build)
+2. Enable "JustArray" (就是行列) in Settings → Language & Input → On-screen keyboard
 
 ## Build
 
