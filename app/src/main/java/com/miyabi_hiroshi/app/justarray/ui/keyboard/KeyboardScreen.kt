@@ -11,9 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -44,6 +49,15 @@ fun KeyboardScreen(
     val candidates by inputStateManager.candidates.collectAsState()
     val inputTypeClass by inputStateManager.inputTypeClass.collectAsState()
     val imeAction by inputStateManager.imeAction.collectAsState()
+    val bufferFullCounter by inputStateManager.bufferFullCounter.collectAsState()
+
+    val flashAlpha = remember { Animatable(0f) }
+    LaunchedEffect(bufferFullCounter) {
+        if (bufferFullCounter > 0) {
+            flashAlpha.snapTo(0.3f)
+            flashAlpha.animateTo(0f, tween(300))
+        }
+    }
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -118,16 +132,25 @@ fun KeyboardScreen(
                 }
                 state is InputState.Composing && candidates.isNotEmpty() -> {
                     val composing = state as InputState.Composing
-                    CandidateBar(
-                        candidates = candidates,
-                        page = composing.page,
-                        onCandidateSelected = { index ->
-                            onKeyPress()
-                            inputStateManager.onCandidateSelected(index)
-                        },
-                        onPreviousPage = { inputStateManager.previousPage() },
-                        onNextPage = { inputStateManager.nextPage() },
-                    )
+                    Box {
+                        CandidateBar(
+                            candidates = candidates,
+                            page = composing.page,
+                            onCandidateSelected = { index ->
+                                onKeyPress()
+                                inputStateManager.onCandidateSelected(index)
+                            },
+                            onPreviousPage = { inputStateManager.previousPage() },
+                            onNextPage = { inputStateManager.nextPage() },
+                        )
+                        if (flashAlpha.value > 0f) {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(Color(0xFFFFA726).copy(alpha = flashAlpha.value))
+                            )
+                        }
+                    }
                 }
                 state is InputState.Selecting -> {
                     val selecting = state as InputState.Selecting

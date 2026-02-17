@@ -24,6 +24,9 @@ class InputStateManager(
     private val _imeAction = MutableStateFlow(0)
     val imeAction: StateFlow<Int> = _imeAction.asStateFlow()
 
+    private val _bufferFullCounter = MutableStateFlow(0)
+    val bufferFullCounter: StateFlow<Int> = _bufferFullCounter.asStateFlow()
+
     private var isPasswordField = false
 
     fun updateInputTypeClass(inputType: Int) {
@@ -80,8 +83,9 @@ class InputStateManager(
                     _state.value = current.copy(keys = newKeys, page = 0)
                     updateComposingText(current.preEditBuffer, newKeys)
                     lookupCandidates(newKeys)
+                } else {
+                    _bufferFullCounter.value++
                 }
-                // If already at max keys, ignore additional keystrokes
             }
             is InputState.Selecting -> {
                 // Add first candidate to pre-edit buffer, then start new composition
