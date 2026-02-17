@@ -1,6 +1,6 @@
 # JustArray (就是行列)
 
-An Android Input Method Editor (IME) for the Array 30 Input Method (行列30輸入法), built with Jetpack Compose.
+An Android Input Method Editor (IME) for the Array 30 Input Method (行列30輸入法).
 
 Requires Android 7.0 (API 24) or later.
 
