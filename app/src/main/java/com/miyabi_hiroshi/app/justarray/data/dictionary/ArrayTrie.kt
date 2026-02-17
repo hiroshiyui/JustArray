@@ -1,13 +1,11 @@
 package com.miyabi_hiroshi.app.justarray.data.dictionary
 
-import java.io.Serializable
-
-class TrieNode : Serializable {
+class TrieNode {
     val children: HashMap<Char, TrieNode> = HashMap()
     val values: MutableList<String> = mutableListOf()
 }
 
-class ArrayTrie : Serializable {
+class ArrayTrie {
     val root = TrieNode()
 
     fun insert(code: String, value: String) {

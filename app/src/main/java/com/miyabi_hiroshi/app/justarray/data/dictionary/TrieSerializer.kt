@@ -1,15 +1,22 @@
 package com.miyabi_hiroshi.app.justarray.data.dictionary
 
 import android.content.Context
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.File
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 object TrieSerializer {
     private const val MAIN_TRIE_FILE = "main_trie.dat"
     private const val SHORT_TRIE_FILE = "short_trie.dat"
     private const val SPECIAL_TRIE_FILE = "special_trie.dat"
     private const val ENGLISH_TRIE_FILE = "english_trie.dat"
+
+    private val MAGIC = byteArrayOf('A'.code.toByte(), 'T'.code.toByte())
+    private const val FORMAT_VERSION = 1
 
     fun saveMainTrie(context: Context, trie: ArrayTrie) = save(context, MAIN_TRIE_FILE, trie)
     fun saveShortTrie(context: Context, trie: ArrayTrie) = save(context, SHORT_TRIE_FILE, trie)
@@ -22,12 +29,32 @@ object TrieSerializer {
     fun loadEnglishTrie(context: Context): ArrayTrie? = load(context, ENGLISH_TRIE_FILE)
 
     fun triesExist(context: Context): Boolean {
-        val dir = context.filesDir
-        return File(dir, MAIN_TRIE_FILE).exists()
+        val file = File(context.filesDir, MAIN_TRIE_FILE)
+        if (!file.exists() || file.length() < MAGIC.size + 4) return false
+        // Verify magic bytes to detect old Java Serializable format
+        return try {
+            FileInputStream(file).use { fis ->
+                val header = ByteArray(MAGIC.size)
+                if (fis.read(header) != MAGIC.size) return false
+                header.contentEquals(MAGIC)
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun englishTrieExists(context: Context): Boolean {
-        return File(context.filesDir, ENGLISH_TRIE_FILE).exists()
+        val file = File(context.filesDir, ENGLISH_TRIE_FILE)
+        if (!file.exists() || file.length() < MAGIC.size + 4) return false
+        return try {
+            FileInputStream(file).use { fis ->
+                val header = ByteArray(MAGIC.size)
+                if (fis.read(header) != MAGIC.size) return false
+                header.contentEquals(MAGIC)
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun deleteAll(context: Context) {
@@ -39,8 +66,10 @@ object TrieSerializer {
 
     private fun save(context: Context, fileName: String, trie: ArrayTrie) {
         val file = File(context.filesDir, fileName)
-        ObjectOutputStream(file.outputStream().buffered()).use { oos ->
-            oos.writeObject(trie)
+        DataOutputStream(BufferedOutputStream(FileOutputStream(file))).use { dos ->
+            dos.write(MAGIC)
+            dos.writeInt(FORMAT_VERSION)
+            writeNode(dos, trie.root)
         }
     }
 
@@ -48,11 +77,44 @@ object TrieSerializer {
         val file = File(context.filesDir, fileName)
         if (!file.exists()) return null
         return try {
-            ObjectInputStream(file.inputStream().buffered()).use { ois ->
-                ois.readObject() as ArrayTrie
+            DataInputStream(BufferedInputStream(FileInputStream(file))).use { dis ->
+                val header = ByteArray(MAGIC.size)
+                dis.readFully(header)
+                if (!header.contentEquals(MAGIC)) return null
+                val version = dis.readInt()
+                if (version != FORMAT_VERSION) return null
+                val trie = ArrayTrie()
+                readNode(dis, trie.root)
+                trie
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
+        }
+    }
+
+    private fun writeNode(dos: DataOutputStream, node: TrieNode) {
+        dos.writeInt(node.values.size)
+        for (value in node.values) {
+            dos.writeUTF(value)
+        }
+        dos.writeInt(node.children.size)
+        for ((key, child) in node.children) {
+            dos.writeChar(key.code)
+            writeNode(dos, child)
+        }
+    }
+
+    private fun readNode(dis: DataInputStream, node: TrieNode) {
+        val valueCount = dis.readInt()
+        for (i in 0 until valueCount) {
+            node.values.add(dis.readUTF())
+        }
+        val childCount = dis.readInt()
+        for (i in 0 until childCount) {
+            val key = dis.readChar()
+            val child = TrieNode()
+            readNode(dis, child)
+            node.children[key] = child
         }
     }
 }
