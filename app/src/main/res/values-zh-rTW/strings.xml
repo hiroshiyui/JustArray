@@ -13,8 +13,22 @@
     <string name="settings_theme_light">淺色</string>
     <string name="settings_theme_dark">深色</string>
     <string name="settings_show_array_labels">顯示行列標籤</string>
+
     <string name="settings_short_code">啟用簡碼</string>
     <string name="settings_special_code">啟用特別碼</string>
+    <string name="settings_user_candidates">使用者常用字</string>
+    <string name="settings_clear_user_candidates">清除使用者詞庫</string>
+    <string name="settings_clear_user_candidates_confirm">確定要清除所有已學習的候選字偏好嗎？</string>
+    <string name="settings_dict_reimport">重新匯入字典</string>
+    <string name="settings_dict_reimport_confirm">重新解析 assets 中的字典檔案？這可能需要一些時間。</string>
+    <string name="settings_dict_reimporting">正在重新匯入…</string>
+
+    <!-- About -->
+    <string name="settings_about">關於</string>
+    <string name="settings_about_version">版本 %1$s</string>
+    <string name="settings_about_author">作者：游輝宏</string>
+    <string name="settings_about_license">授權條款：GNU GPLv3</string>
+    <string name="settings_about_array_credit">行列輸入法由廖明德先生發明</string>
 
     <!-- Setup wizard -->
     <string name="setup_title">設定就是行列輸入法</string>
