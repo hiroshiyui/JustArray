@@ -125,8 +125,8 @@ fun KeyboardScreen(
                             onKeyPress()
                             inputStateManager.onComposingCandidateSelected(index)
                         },
-                        onPreviousPage = { inputStateManager.composingPreviousPage() },
-                        onNextPage = { inputStateManager.composingNextPage() },
+                        onPreviousPage = { inputStateManager.previousPage() },
+                        onNextPage = { inputStateManager.nextPage() },
                     )
                 }
                 state is InputState.Selecting -> {
@@ -151,8 +151,8 @@ fun KeyboardScreen(
                             onKeyPress()
                             inputStateManager.onEnglishCandidateSelected(index)
                         },
-                        onPreviousPage = { inputStateManager.englishPreviousPage() },
-                        onNextPage = { inputStateManager.englishNextPage() },
+                        onPreviousPage = { inputStateManager.previousPage() },
+                        onNextPage = { inputStateManager.nextPage() },
                     )
                 }
                 state is InputState.Idle && !clipboardText.isNullOrEmpty() -> {

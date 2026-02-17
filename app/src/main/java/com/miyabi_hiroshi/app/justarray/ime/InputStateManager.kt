@@ -348,21 +348,37 @@ class InputStateManager(
         }
     }
 
+    private fun wrapNextPage(currentPage: Int, candidateCount: Int): Int {
+        val maxPage = (candidateCount - 1) / CANDIDATES_PER_PAGE
+        return if (currentPage < maxPage) currentPage + 1 else 0
+    }
+
+    private fun wrapPreviousPage(currentPage: Int, candidateCount: Int): Int {
+        val maxPage = (candidateCount - 1) / CANDIDATES_PER_PAGE
+        return if (currentPage > 0) currentPage - 1 else maxPage
+    }
+
     fun nextPage() {
-        val current = _state.value
-        if (current is InputState.Selecting) {
-            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
-            val nextPage = if (current.page < maxPage) current.page + 1 else 0
-            _state.value = current.copy(page = nextPage)
+        when (val current = _state.value) {
+            is InputState.Selecting ->
+                _state.value = current.copy(page = wrapNextPage(current.page, current.candidates.size))
+            is InputState.Composing ->
+                _state.value = current.copy(page = wrapNextPage(current.page, _candidates.value.size))
+            is InputState.EnglishMode -> if (current.candidates.isNotEmpty())
+                _state.value = current.copy(page = wrapNextPage(current.page, current.candidates.size))
+            else -> {}
         }
     }
 
     fun previousPage() {
-        val current = _state.value
-        if (current is InputState.Selecting) {
-            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
-            val prevPage = if (current.page > 0) current.page - 1 else maxPage
-            _state.value = current.copy(page = prevPage)
+        when (val current = _state.value) {
+            is InputState.Selecting ->
+                _state.value = current.copy(page = wrapPreviousPage(current.page, current.candidates.size))
+            is InputState.Composing ->
+                _state.value = current.copy(page = wrapPreviousPage(current.page, _candidates.value.size))
+            is InputState.EnglishMode -> if (current.candidates.isNotEmpty())
+                _state.value = current.copy(page = wrapPreviousPage(current.page, current.candidates.size))
+            else -> {}
         }
     }
 
@@ -382,24 +398,6 @@ class InputStateManager(
         }
     }
 
-    fun composingNextPage() {
-        val current = _state.value
-        if (current is InputState.Composing) {
-            val maxPage = (_candidates.value.size - 1) / CANDIDATES_PER_PAGE
-            val nextPage = if (current.page < maxPage) current.page + 1 else 0
-            _state.value = current.copy(page = nextPage)
-        }
-    }
-
-    fun composingPreviousPage() {
-        val current = _state.value
-        if (current is InputState.Composing) {
-            val maxPage = (_candidates.value.size - 1) / CANDIDATES_PER_PAGE
-            val prevPage = if (current.page > 0) current.page - 1 else maxPage
-            _state.value = current.copy(page = prevPage)
-        }
-    }
-
     fun onEnglishCandidateSelected(index: Int) {
         val current = _state.value
         if (current is InputState.EnglishMode && current.candidates.isNotEmpty()) {
@@ -411,24 +409,6 @@ class InputStateManager(
                 onCommitText(" ")
                 _state.value = InputState.EnglishMode()
             }
-        }
-    }
-
-    fun englishNextPage() {
-        val current = _state.value
-        if (current is InputState.EnglishMode && current.candidates.isNotEmpty()) {
-            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
-            val nextPage = if (current.page < maxPage) current.page + 1 else 0
-            _state.value = current.copy(page = nextPage)
-        }
-    }
-
-    fun englishPreviousPage() {
-        val current = _state.value
-        if (current is InputState.EnglishMode && current.candidates.isNotEmpty()) {
-            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
-            val prevPage = if (current.page > 0) current.page - 1 else maxPage
-            _state.value = current.copy(page = prevPage)
         }
     }
 

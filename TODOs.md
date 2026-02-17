@@ -2,7 +2,7 @@
 
 ## Input & State Machine
 
-- [ ] Consolidate duplicate pagination logic (`nextPage`/`previousPage` repeated 3 times for Composing, Selecting, EnglishMode)
+- [x] Consolidate duplicate pagination logic (`nextPage`/`previousPage` repeated 3 times for Composing, Selecting, EnglishMode)
 - [ ] Consolidate duplicate candidate selection logic (`onCandidateSelected`, `onComposingCandidateSelected`, `onEnglishCandidateSelected`)
 - [ ] Add reverse lookup (character → code) for learning Array codes
 - [ ] Add clipboard history (last N items) shown in candidate bar when Idle
