@@ -70,7 +70,7 @@ fun FunctionRow(
             )
         } else {
             FunctionKey(
-                label = stringResource(R.string.key_symbol),
+                label = "🔣",
                 accessibilityLabel = stringResource(R.string.a11y_symbol),
                 keyHeight = functionKeyHeight,
                 modifier = Modifier.weight(1.2f),
