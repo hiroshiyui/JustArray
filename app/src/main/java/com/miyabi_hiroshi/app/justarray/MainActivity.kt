@@ -7,6 +7,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,14 +17,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.miyabi_hiroshi.app.justarray.data.prefs.UserPreferences
 import com.miyabi_hiroshi.app.justarray.ui.settings.SettingsScreen
 import com.miyabi_hiroshi.app.justarray.ui.theme.JustArrayTheme
 import com.miyabi_hiroshi.app.justarray.util.AppContainer
@@ -32,10 +35,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val appContainer = AppContainer.getInstance(applicationContext)
         setContent {
-            JustArrayTheme {
+            val theme by appContainer.userPreferences.theme
+                .collectAsState(initial = UserPreferences.THEME_SYSTEM)
+            val darkTheme = when (theme) {
+                UserPreferences.THEME_LIGHT -> false
+                UserPreferences.THEME_DARK -> true
+                else -> isSystemInDarkTheme()
+            }
+            JustArrayTheme(darkTheme = darkTheme) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainContent(modifier = Modifier.padding(innerPadding))
+                    MainContent(
+                        appContainer = appContainer,
+                        modifier = Modifier.padding(innerPadding),
+                    )
                 }
             }
         }
@@ -43,9 +57,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun MainContent(modifier: Modifier = Modifier) {
+private fun MainContent(
+    appContainer: AppContainer,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
-    val appContainer = AppContainer.getInstance(context.applicationContext)
 
     Column(
         modifier = modifier
@@ -104,23 +120,13 @@ private fun MainContent(modifier: Modifier = Modifier) {
             Text(stringResource(R.string.setup_select_ime))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Settings button
-        OutlinedButton(
-            onClick = {
-                // Navigate to settings (same activity, different content)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-        ) {
-            Text(stringResource(R.string.setup_open_preferences))
-        }
-
         Spacer(modifier = Modifier.height(24.dp))
 
         // Inline settings
-        SettingsScreen(userPreferences = appContainer.userPreferences)
+        SettingsScreen(
+            userPreferences = appContainer.userPreferences,
+            dictionaryRepository = appContainer.dictionaryRepository,
+            database = appContainer.database,
+        )
     }
 }
