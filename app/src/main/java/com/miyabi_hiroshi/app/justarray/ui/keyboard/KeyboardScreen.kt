@@ -190,11 +190,13 @@ fun KeyboardScreen(
                         onNextPage = { inputStateManager.nextPage() },
                     )
                 }
-                state is InputState.EnglishMode && (state as InputState.EnglishMode).candidates.isNotEmpty() -> {
+                state is InputState.EnglishMode && (state as InputState.EnglishMode).typedText.isNotEmpty() -> {
                     val english = state as InputState.EnglishMode
                     CandidateBar(
                         candidates = english.candidates,
                         page = english.page,
+                        typedWord = english.typedText,
+                        onTypedWordTapped = { inputStateManager.toggleFirstLetterCase() },
                         onCandidateSelected = { index ->
                             onKeyPress()
                             inputStateManager.onCandidateSelected(index)

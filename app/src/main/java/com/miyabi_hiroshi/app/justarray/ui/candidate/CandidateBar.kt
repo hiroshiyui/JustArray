@@ -53,6 +53,8 @@ fun CandidateBar(
     candidates: List<String>,
     page: Int,
     reverseCodes: Map<String, String> = emptyMap(),
+    typedWord: String? = null,
+    onTypedWordTapped: (() -> Unit)? = null,
     onCandidateSelected: (Int) -> Unit,
     onPreviousPage: () -> Unit,
     onNextPage: () -> Unit,
@@ -74,6 +76,14 @@ fun CandidateBar(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (!typedWord.isNullOrEmpty()) {
+                item {
+                    TypedWordChip(
+                        word = typedWord,
+                        onTapped = { onTypedWordTapped?.invoke() },
+                    )
+                }
+            }
             itemsIndexed(pageCandidates) { index, candidate ->
                 CandidateItem(
                     index = index,
@@ -197,5 +207,32 @@ private fun CandidateItem(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TypedWordChip(
+    word: String,
+    onTapped: () -> Unit,
+) {
+    val typedWordDesc = stringResource(R.string.a11y_typed_word, word)
+    Box(
+        modifier = Modifier
+            .widthIn(min = 40.dp)
+            .height(36.dp)
+            .clickable { onTapped() }
+            .padding(horizontal = 6.dp)
+            .semantics {
+                contentDescription = typedWordDesc
+                role = Role.Button
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = word,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = KeyboardTheme.current.candidateTextColor,
+        )
     }
 }

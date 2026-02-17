@@ -491,6 +491,77 @@ class InputStateManagerTest {
         assertEquals(InputState.Idle, manager.state.value)
     }
 
+    // --- Toggle first letter case ---
+
+    @Test
+    fun `toggleFirstLetterCase lowercase to uppercase`() {
+        manager.toggleEnglishMode()
+        manager.onArrayKey('h')
+        manager.onArrayKey('e')
+        manager.onArrayKey('l')
+        manager.onArrayKey('l')
+
+        manager.toggleFirstLetterCase()
+
+        val state = manager.state.value as InputState.EnglishMode
+        assertEquals("Hell", state.typedText)
+    }
+
+    @Test
+    fun `toggleFirstLetterCase uppercase to lowercase`() {
+        manager.toggleEnglishMode()
+        manager.onShiftKey() // SHIFTED
+        manager.onArrayKey('h') // "H", shift reverts to NONE
+        manager.onArrayKey('e')
+        manager.onArrayKey('l')
+        manager.onArrayKey('l')
+
+        manager.toggleFirstLetterCase()
+
+        val state = manager.state.value as InputState.EnglishMode
+        assertEquals("hell", state.typedText)
+    }
+
+    @Test
+    fun `toggleFirstLetterCase no-op when typedText is empty`() {
+        manager.toggleEnglishMode()
+
+        manager.toggleFirstLetterCase()
+
+        val state = manager.state.value as InputState.EnglishMode
+        assertEquals("", state.typedText)
+    }
+
+    @Test
+    fun `toggleFirstLetterCase no-op when not in EnglishMode`() {
+        manager.toggleFirstLetterCase() // in Idle, should do nothing
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
+    @Test
+    fun `toggleFirstLetterCase updates composing text`() {
+        manager.toggleEnglishMode()
+        manager.onArrayKey('h')
+        manager.onArrayKey('i')
+
+        composing.clear()
+        manager.toggleFirstLetterCase()
+
+        assertTrue(composing.any { it == "Hi" })
+    }
+
+    @Test
+    fun `toggleFirstLetterCase resets page to zero`() {
+        manager.toggleEnglishMode()
+        manager.onArrayKey('h')
+        manager.onArrayKey('e')
+
+        manager.toggleFirstLetterCase()
+
+        val state = manager.state.value as InputState.EnglishMode
+        assertEquals(0, state.page)
+    }
+
     // --- Symbol mode ---
 
     @Test

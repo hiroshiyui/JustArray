@@ -79,6 +79,7 @@
     <string name="a11y_next_page">下一頁</string>
     <string name="a11y_page_indicator">第 %1$d 頁，共 %2$d 頁</string>
     <string name="a11y_candidate">候選字 %1$d: %2$s</string>
+    <string name="a11y_typed_word">已輸入文字：%1$s，點擊切換大小寫</string>
     <string name="a11y_paste_clipboard">貼上剪貼簿內容</string>
 
     <!-- Symbol categories -->

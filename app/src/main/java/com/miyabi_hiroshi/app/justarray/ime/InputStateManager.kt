@@ -403,6 +403,18 @@ class InputStateManager(
         }
     }
 
+    fun toggleFirstLetterCase() {
+        val current = _state.value
+        if (current is InputState.EnglishMode && current.typedText.isNotEmpty()) {
+            val first = current.typedText[0]
+            val toggled = if (first.isUpperCase()) first.lowercaseChar() else first.uppercaseChar()
+            val newText = toggled + current.typedText.substring(1)
+            onSetComposingText(newText)
+            val predictions = dictionaryRepository.englishPrefixLookup(newText)
+            _state.value = current.copy(typedText = newText, candidates = predictions, page = 0)
+        }
+    }
+
     fun onSwipeUpKey(qwertyChar: Char) {
         when (val current = _state.value) {
             is InputState.EnglishMode -> {
