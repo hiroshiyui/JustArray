@@ -106,6 +106,46 @@ tasks.register<JacocoReport>("jacocoTestReport") {
     executionData.setFrom("build/jacoco/testDebugUnitTest.exec")
 }
 
+afterEvaluate {
+    android.buildTypes.names.forEach { variantName ->
+        val capitalizedName = variantName.replaceFirstChar { it.uppercase() }
+
+        tasks.register("gpgSign$capitalizedName") {
+            description = "Creates detached GPG signatures (.asc) for $variantName APK/AAB files."
+            group = "distribution"
+
+            doLast {
+                val searchDirs = listOf(
+                    layout.projectDirectory.dir(variantName).asFile,
+                    layout.projectDirectory.dir("build/outputs/apk/$variantName").asFile,
+                    layout.projectDirectory.dir("build/outputs/bundle/$variantName").asFile,
+                )
+                val files = searchDirs
+                    .filter { it.isDirectory }
+                    .flatMap { dir ->
+                        dir.listFiles { f ->
+                            f.isFile && (f.extension == "apk" || f.extension == "aab")
+                        }?.toList() ?: emptyList()
+                    }
+
+                require(files.isNotEmpty()) {
+                    "No .apk or .aab files found in: ${searchDirs.joinToString { it.path }}"
+                }
+
+                files.forEach { file ->
+                    logger.lifecycle("GPG signing ${file.name} ...")
+                    val process = ProcessBuilder("gpg", "--yes", "--detach-sign", "--armor", file.absolutePath)
+                        .inheritIO()
+                        .start()
+                    val exitCode = process.waitFor()
+                    require(exitCode == 0) { "gpg exited with code $exitCode for ${file.name}" }
+                    logger.lifecycle("  -> ${file.name}.asc")
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
