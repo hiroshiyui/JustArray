@@ -1,9 +1,11 @@
 package com.miyabi_hiroshi.app.justarray.ime
 
 import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
@@ -65,6 +67,18 @@ class JustArrayIME : InputMethodService() {
         }
     }
 
+    private fun switchIme() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            switchToNextInputMethod(false)
+        } else {
+            val imm = getSystemService(InputMethodManager::class.java)
+            @Suppress("DEPRECATION")
+            window?.window?.let { w ->
+                imm?.switchToNextInputMethod(w.attributes.token, false)
+            }
+        }
+    }
+
     override fun onCreateInputView(): View {
         // Set lifecycle owners on the IME window's decor view so Compose's
         // WindowRecomposer can find them when traversing the view tree.
@@ -114,6 +128,7 @@ class JustArrayIME : InputMethodService() {
                             inputStateManager = inputStateManager,
                             showArrayLabels = showArrayLabels,
                             onKeyPress = { if (vibrationEnabled) hapticHelper.vibrate() },
+                            onSwitchIme = { switchIme() },
                         )
                     }
                 }

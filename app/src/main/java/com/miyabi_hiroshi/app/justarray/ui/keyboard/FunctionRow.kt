@@ -37,6 +37,7 @@ fun FunctionRow(
     onEnter: () -> Unit,
     onToggleEnglish: () -> Unit,
     onToggleSymbol: () -> Unit,
+    onSwitchIme: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -56,8 +57,13 @@ fun FunctionRow(
             onClick = onToggleSymbol,
         )
         FunctionKey(
+            label = "\uD83C\uDF10",
+            modifier = Modifier.weight(0.8f),
+            onClick = onSwitchIme,
+        )
+        FunctionKey(
             label = "空白",
-            modifier = Modifier.weight(3f),
+            modifier = Modifier.weight(2.4f),
             onClick = onSpace,
         )
         FunctionKey(

@@ -23,6 +23,7 @@ fun KeyboardScreen(
     inputStateManager: InputStateManager,
     showArrayLabels: Boolean = true,
     onKeyPress: () -> Unit = {},
+    onSwitchIme: () -> Unit = {},
 ) {
     val state by inputStateManager.state.collectAsState()
     val candidates by inputStateManager.candidates.collectAsState()
@@ -148,6 +149,7 @@ fun KeyboardScreen(
                     onKeyPress()
                     inputStateManager.toggleSymbolMode()
                 },
+                onSwitchIme = onSwitchIme,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
