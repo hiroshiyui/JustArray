@@ -29,9 +29,8 @@ All items completed. Hilt DI migration was considered and decided against — `A
 
 ## Polish
 
-- [ ] Design proper app icon (currently using Android default)
-- [ ] Add onboarding / first-launch tutorial
 - [ ] Add IME switching key (globe icon) for multi-IME users
 - [ ] Support clipboard paste preview
 - [ ] Add user dictionary / custom phrases
 - [ ] Accessibility: TalkBack content descriptions for keys
+- [ ] Accessibility: TalkBack content descriptions for candidates
