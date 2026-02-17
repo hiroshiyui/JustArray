@@ -508,5 +508,18 @@ class InputStateManager(
     private fun lookupCandidates(keys: String) {
         val results = dictionaryRepository.lookup(keys)
         _candidates.value = results
+
+        // Auto-select when exactly one candidate matches
+        if (results.size == 1) {
+            val current = _state.value
+            if (current is InputState.Composing) {
+                val selected = results[0]
+                val newPreEdit = current.preEditBuffer + selected
+                dictionaryRepository.incrementFrequency(keys, selected)
+                _state.value = InputState.Composing(keys = "", preEditBuffer = newPreEdit)
+                _candidates.value = emptyList()
+                updateComposingText(newPreEdit, "")
+            }
+        }
     }
 }

@@ -21,9 +21,18 @@ class InputStateManagerTest {
         insert("a", "甲")
         insert("a", "乙")
         insert("a", "丙")
+        // ≥2 candidates at each intermediate level to prevent premature auto-select
         insert("as", "明")
+        insert("as", "暝")
         insert("asd", "暗")
+        insert("asd", "闇")
         insert("asdf", "晦")
+        insert("asdf", "誨")
+        // Single candidate codes — auto-select immediately on keystroke
+        insert("q", "球")
+        insert("w", "我")
+        // Single candidate 2-key code (first key "a" has multiple, so no premature auto-select)
+        insert("az", "雜")
         // Many candidates for pagination tests
         (1..25).forEach { i -> insert("fg", "字$i") }
     }
@@ -107,23 +116,142 @@ class InputStateManagerTest {
         assertEquals(listOf("甲", "乙", "丙"), (state as InputState.Selecting).candidates)
     }
 
-    // --- Composing → auto-commit single candidate ---
+    // --- Composing → auto-select single candidate on keystroke ---
 
     @Test
-    fun `onSpaceKey with single candidate adds to pre-edit buffer`() {
-        // "asdf" has single candidate "晦"
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        manager.onArrayKey('d')
-        manager.onArrayKey('f')
-
-        manager.onSpaceKey()
+    fun `single candidate auto-selects on keystroke`() {
+        // "q" has single candidate "球" — auto-selects immediately
+        manager.onArrayKey('q')
 
         val state = manager.state.value
         assertTrue("Expected Composing but got $state", state is InputState.Composing)
         val composingState = state as InputState.Composing
-        assertEquals("晦", composingState.preEditBuffer)
+        assertEquals("球", composingState.preEditBuffer)
         assertEquals("", composingState.keys)
+    }
+
+    @Test
+    fun `auto-select after multiple keystrokes when final key narrows to one`() {
+        // "a" has 3 candidates (no auto-select), "az" has 1 candidate (auto-selects)
+        manager.onArrayKey('a')
+        val afterA = manager.state.value as InputState.Composing
+        assertEquals("a", afterA.keys)
+        assertEquals("", afterA.preEditBuffer)
+
+        manager.onArrayKey('z')
+        val state = manager.state.value as InputState.Composing
+        assertEquals("雜", state.preEditBuffer)
+        assertEquals("", state.keys)
+    }
+
+    @Test
+    fun `no auto-select with multiple candidates`() {
+        manager.onArrayKey('a') // 3 candidates
+
+        val state = manager.state.value as InputState.Composing
+        assertEquals("a", state.keys)
+        assertEquals("", state.preEditBuffer)
+        assertEquals(3, manager.candidates.value.size)
+    }
+
+    @Test
+    fun `no auto-select with zero candidates`() {
+        manager.onArrayKey('z') // no entries for just "z"
+
+        val state = manager.state.value as InputState.Composing
+        assertEquals("z", state.keys)
+        assertEquals("", state.preEditBuffer)
+        assertTrue(manager.candidates.value.isEmpty())
+    }
+
+    @Test
+    fun `auto-select appends to existing pre-edit buffer`() {
+        // Manually select to build pre-edit first
+        manager.onArrayKey('a')
+        manager.onSpaceKey() // → Selecting
+        manager.onCandidateSelected(0) // 甲 → preEdit="甲"
+
+        // Now type 'q' → auto-selects "球", appends to pre-edit
+        manager.onArrayKey('q')
+        val state = manager.state.value as InputState.Composing
+        assertEquals("甲球", state.preEditBuffer)
+        assertEquals("", state.keys)
+    }
+
+    @Test
+    fun `consecutive auto-selects accumulate in pre-edit`() {
+        manager.onArrayKey('q') // auto-selects "球"
+        manager.onArrayKey('w') // auto-selects "我"
+
+        val state = manager.state.value as InputState.Composing
+        assertEquals("球我", state.preEditBuffer)
+        assertEquals("", state.keys)
+    }
+
+    @Test
+    fun `auto-select from Selecting state via new single-candidate key`() {
+        manager.onArrayKey('a')
+        manager.onSpaceKey() // → Selecting [甲, 乙, 丙]
+
+        // Type 'q' in Selecting: first candidate "甲" added to pre-edit,
+        // then lookup("q") → 1 candidate "球" → auto-selects too
+        manager.onArrayKey('q')
+
+        val state = manager.state.value as InputState.Composing
+        assertEquals("甲球", state.preEditBuffer)
+        assertEquals("", state.keys)
+    }
+
+    @Test
+    fun `auto-select clears candidate list`() {
+        manager.onArrayKey('q') // auto-selects "球"
+
+        assertTrue(manager.candidates.value.isEmpty())
+    }
+
+    @Test
+    fun `auto-select updates composing text with pre-edit content`() {
+        composing.clear()
+        manager.onArrayKey('q') // auto-selects "球"
+
+        // Composing text should include the pre-edit buffer character
+        assertTrue(composing.any { it.contains("球") })
+    }
+
+    @Test
+    fun `space after auto-select commits pre-edit with space`() {
+        manager.onArrayKey('q') // auto-selects "球" → preEdit="球", keys=""
+
+        committed.clear()
+        manager.onSpaceKey()
+
+        // Space with empty keys and non-empty pre-edit → commit pre-edit + space
+        assertTrue(committed.contains("球"))
+        assertTrue(committed.contains(" "))
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
+    @Test
+    fun `enter after auto-select commits pre-edit`() {
+        manager.onArrayKey('q') // auto-selects "球"
+
+        committed.clear()
+        manager.onEnterKey()
+
+        assertTrue(committed.contains("球"))
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
+    @Test
+    fun `typing continues normally after auto-select`() {
+        manager.onArrayKey('q') // auto-selects "球" → preEdit="球", keys=""
+
+        // Continue typing a multi-candidate code
+        manager.onArrayKey('a')
+        val state = manager.state.value as InputState.Composing
+        assertEquals("球", state.preEditBuffer)
+        assertEquals("a", state.keys)
+        assertEquals(3, manager.candidates.value.size)
     }
 
     // --- Selecting: candidate selection ---
@@ -220,12 +348,8 @@ class InputStateManagerTest {
 
     @Test
     fun `onEnterKey in Composing commits pre-edit and discards keys`() {
-        // Build up pre-edit buffer first
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        manager.onArrayKey('d')
-        manager.onArrayKey('f')
-        manager.onSpaceKey() // single candidate "晦" → pre-edit buffer
+        // Build up pre-edit buffer via auto-select
+        manager.onArrayKey('q') // single candidate "球" → auto-selected into pre-edit
 
         // Now type more keys
         manager.onArrayKey('a')
@@ -235,19 +359,15 @@ class InputStateManagerTest {
 
         manager.onEnterKey()
 
-        // Should commit pre-edit "晦", discard composing key "a"
-        assertTrue(committed.contains("晦"))
+        // Should commit pre-edit "球", discard composing key "a"
+        assertTrue(committed.contains("球"))
         assertEquals(InputState.Idle, manager.state.value)
     }
 
     @Test
     fun `onEnterKey in Selecting commits pre-edit plus first candidate`() {
-        // Build pre-edit
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        manager.onArrayKey('d')
-        manager.onArrayKey('f')
-        manager.onSpaceKey() // "晦" in pre-edit
+        // Build pre-edit via auto-select
+        manager.onArrayKey('q') // "球" in pre-edit
 
         // Now go to Selecting
         manager.onArrayKey('a')
@@ -257,8 +377,8 @@ class InputStateManagerTest {
 
         manager.onEnterKey()
 
-        // Should commit "晦" + "甲" (first candidate)
-        assertTrue(committed.contains("晦甲"))
+        // Should commit "球" + "甲" (first candidate)
+        assertTrue(committed.contains("球甲"))
         assertEquals(InputState.Idle, manager.state.value)
     }
 
@@ -266,17 +386,13 @@ class InputStateManagerTest {
 
     @Test
     fun `reset commits pre-edit buffer and goes to Idle`() {
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        manager.onArrayKey('d')
-        manager.onArrayKey('f')
-        manager.onSpaceKey() // "晦" in pre-edit
+        manager.onArrayKey('q') // "球" auto-selected into pre-edit
 
         committed.clear()
 
         manager.reset()
 
-        assertTrue(committed.contains("晦"))
+        assertTrue(committed.contains("球"))
         assertEquals(InputState.Idle, manager.state.value)
     }
 
@@ -444,29 +560,22 @@ class InputStateManagerTest {
         manager.onSpaceKey()
         assertTrue(manager.state.value is InputState.Selecting)
 
-        // Step 3: Select candidate 1 (甲) → Composing with preEditBuffer="甲"
+        // Step 3: Select candidate 0 (甲) → Composing with preEditBuffer="甲"
         manager.onCandidateSelected(0)
         val afterSelect = manager.state.value as InputState.Composing
         assertEquals("甲", afterSelect.preEditBuffer)
         assertEquals("", afterSelect.keys)
 
-        // Step 4: Type more keys "a" "s" → Composing with preEditBuffer="甲", keys="as"
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        val afterMoreKeys = manager.state.value as InputState.Composing
-        assertEquals("甲", afterMoreKeys.preEditBuffer)
-        assertEquals("as", afterMoreKeys.keys)
-
-        // Step 5: Space with single candidate "明" → auto-adds to preEditBuffer
-        manager.onSpaceKey()
+        // Step 4: Type "q" → single candidate "球" auto-selects → preEditBuffer="甲球"
+        manager.onArrayKey('q')
         val afterAutoSelect = manager.state.value as InputState.Composing
-        assertEquals("甲明", afterAutoSelect.preEditBuffer)
+        assertEquals("甲球", afterAutoSelect.preEditBuffer)
         assertEquals("", afterAutoSelect.keys)
 
-        // Step 6: Enter commits the full pre-edit buffer
+        // Step 5: Enter commits the full pre-edit buffer
         committed.clear()
         manager.onEnterKey()
-        assertTrue(committed.contains("甲明"))
+        assertTrue(committed.contains("甲球"))
         assertEquals(InputState.Idle, manager.state.value)
     }
 
@@ -495,16 +604,12 @@ class InputStateManagerTest {
 
     @Test
     fun `compose backspace through pre-edit buffer to idle`() {
-        // Build up pre-edit: type "asdf" → single candidate "晦" auto-selected
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        manager.onArrayKey('d')
-        manager.onArrayKey('f')
-        manager.onSpaceKey() // "晦" in preEditBuffer
+        // Build up pre-edit: type "q" → single candidate "球" auto-selected on keystroke
+        manager.onArrayKey('q')
 
-        val afterSpace = manager.state.value as InputState.Composing
-        assertEquals("晦", afterSpace.preEditBuffer)
-        assertEquals("", afterSpace.keys)
+        val afterAutoSelect = manager.state.value as InputState.Composing
+        assertEquals("球", afterAutoSelect.preEditBuffer)
+        assertEquals("", afterAutoSelect.keys)
 
         // Backspace removes last char from preEditBuffer
         manager.onBackspaceKey()
@@ -531,18 +636,14 @@ class InputStateManagerTest {
 
     @Test
     fun `compose reset with pre-edit commits pre-edit then idle`() {
-        // Build pre-edit, then start composing more
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        manager.onArrayKey('d')
-        manager.onArrayKey('f')
-        manager.onSpaceKey() // "晦" in pre-edit
+        // Build pre-edit via auto-select, then start composing more
+        manager.onArrayKey('q') // "球" in pre-edit
         manager.onArrayKey('a') // start composing "a"
 
         committed.clear()
         manager.reset()
 
-        assertTrue(committed.contains("晦"))
+        assertTrue(committed.contains("球"))
         assertEquals(InputState.Idle, manager.state.value)
     }
 
@@ -554,16 +655,14 @@ class InputStateManagerTest {
         manager.onCandidateSelected(2)
         assertEquals("丙", (manager.state.value as InputState.Composing).preEditBuffer)
 
-        // Second character: type "as" → single candidate "明", space auto-selects
-        manager.onArrayKey('a')
-        manager.onArrayKey('s')
-        manager.onSpaceKey()
-        assertEquals("丙明", (manager.state.value as InputState.Composing).preEditBuffer)
+        // Second character: type "q" → single candidate "球", auto-selects on keystroke
+        manager.onArrayKey('q')
+        assertEquals("丙球", (manager.state.value as InputState.Composing).preEditBuffer)
 
         // Commit with Enter
         committed.clear()
         manager.onEnterKey()
-        assertTrue(committed.contains("丙明"))
+        assertTrue(committed.contains("丙球"))
         assertEquals(InputState.Idle, manager.state.value)
     }
 
