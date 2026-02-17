@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">JustArray</string>
+    <string name="ime_name">JustArray</string>
+    <string name="subtype_array30">Array 30</string>
+
+    <!-- Settings -->
+    <string name="settings_title">JustArray Settings</string>
+    <string name="settings_keyboard_height">Keyboard Height</string>
+    <string name="settings_vibration">Key Vibration</string>
+    <string name="settings_sound">Key Sound</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Follow System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_show_array_labels">Show Array Labels</string>
+    <string name="settings_short_code">Enable Short Codes</string>
+    <string name="settings_special_code">Enable Special Codes</string>
+
+    <!-- Setup wizard -->
+    <string name="setup_title">Set Up JustArray</string>
+    <string name="setup_step1_enable">Step 1: Enable Input Method</string>
+    <string name="setup_step1_desc">Go to system settings and enable \"JustArray\"</string>
+    <string name="setup_step2_select">Step 2: Select Input Method</string>
+    <string name="setup_step2_desc">Switch to \"JustArray\" as your current input method</string>
+    <string name="setup_step3_done">Setup complete!</string>
+    <string name="setup_open_settings">Open Input Method Settings</string>
+    <string name="setup_select_ime">Select Input Method</string>
+    <string name="setup_open_preferences">Open Preferences</string>
+
+    <!-- Dictionary -->
+    <string name="dict_loading">Loading dictionary…</string>
+    <string name="dict_not_found">Dictionary files not found. Please place .cin files in the assets folder.</string>
+</resources>

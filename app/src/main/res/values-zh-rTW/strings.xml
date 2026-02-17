@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">就是行列</string>
+    <string name="ime_name">就是行列</string>
+    <string name="subtype_array30">行列30</string>
+
+    <!-- Settings -->
+    <string name="settings_title">就是行列 設定</string>
+    <string name="settings_keyboard_height">鍵盤高度</string>
+    <string name="settings_vibration">按鍵振動</string>
+    <string name="settings_sound">按鍵聲音</string>
+    <string name="settings_theme">主題</string>
+    <string name="settings_theme_system">跟隨系統</string>
+    <string name="settings_theme_light">淺色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_show_array_labels">顯示行列標籤</string>
+    <string name="settings_short_code">啟用簡碼</string>
+    <string name="settings_special_code">啟用特別碼</string>
+
+    <!-- Setup wizard -->
+    <string name="setup_title">設定就是行列輸入法</string>
+    <string name="setup_step1_enable">步驟一：啟用輸入法</string>
+    <string name="setup_step1_desc">前往系統設定，啟用「就是行列」</string>
+    <string name="setup_step2_select">步驟二：選擇輸入法</string>
+    <string name="setup_step2_desc">切換至「就是行列」作為目前的輸入法</string>
+    <string name="setup_step3_done">設定完成！</string>
+    <string name="setup_open_settings">開啟輸入法設定</string>
+    <string name="setup_select_ime">選擇輸入法</string>
+    <string name="setup_open_preferences">開啟偏好設定</string>
+
+    <!-- Dictionary -->
+    <string name="dict_loading">正在載入字典…</string>
+    <string name="dict_not_found">找不到字典檔案，請將 .cin 檔案放入 assets 資料夾</string>
+</resources>
