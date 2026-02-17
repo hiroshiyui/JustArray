@@ -14,6 +14,7 @@ object TrieSerializer {
     private const val SHORT_TRIE_FILE = "short_trie.dat"
     private const val SPECIAL_TRIE_FILE = "special_trie.dat"
     private const val ENGLISH_TRIE_FILE = "english_trie.dat"
+    private const val FINGERPRINT_FILE = "dict_fingerprint.txt"
 
     private val MAGIC = byteArrayOf('A'.code.toByte(), 'T'.code.toByte())
     private const val FORMAT_VERSION = 1
@@ -59,9 +60,18 @@ object TrieSerializer {
 
     fun deleteAll(context: Context) {
         val dir = context.filesDir
-        listOf(MAIN_TRIE_FILE, SHORT_TRIE_FILE, SPECIAL_TRIE_FILE, ENGLISH_TRIE_FILE).forEach {
+        listOf(MAIN_TRIE_FILE, SHORT_TRIE_FILE, SPECIAL_TRIE_FILE, ENGLISH_TRIE_FILE, FINGERPRINT_FILE).forEach {
             File(dir, it).delete()
         }
+    }
+
+    fun saveFingerprint(context: Context, fingerprint: String) {
+        File(context.filesDir, FINGERPRINT_FILE).writeText(fingerprint)
+    }
+
+    fun loadFingerprint(context: Context): String? {
+        val file = File(context.filesDir, FINGERPRINT_FILE)
+        return if (file.exists()) file.readText() else null
     }
 
     private fun save(context: Context, fileName: String, trie: ArrayTrie) {
