@@ -34,6 +34,25 @@ interface DictionaryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertSpecialCodeEntries(entries: List<SpecialCodeEntry>)
 
+    // User candidates
+    @Query("SELECT * FROM user_candidates WHERE code = :code ORDER BY frequency DESC")
+    fun lookupUserCandidates(code: String): List<UserCandidate>
+
+    @Query("INSERT OR REPLACE INTO user_candidates (code, character, frequency) VALUES (:code, :character, COALESCE((SELECT frequency FROM user_candidates WHERE code = :code AND character = :character), 0) + 1)")
+    fun incrementUserFrequency(code: String, character: String)
+
+    @Query("DELETE FROM user_candidates")
+    fun clearUserCandidates()
+
+    @Query("DELETE FROM dictionary")
+    fun clearDictionary()
+
+    @Query("DELETE FROM short_codes")
+    fun clearShortCodes()
+
+    @Query("DELETE FROM special_codes")
+    fun clearSpecialCodes()
+
     // Utility
     @Query("SELECT COUNT(*) FROM dictionary")
     fun getDictionaryCount(): Int

@@ -21,6 +21,7 @@ class UserPreferences(private val context: Context) {
         val KEY_SHOW_ARRAY_LABELS = booleanPreferencesKey("show_array_labels")
         val KEY_SHORT_CODE = booleanPreferencesKey("short_code_enabled")
         val KEY_SPECIAL_CODE = booleanPreferencesKey("special_code_enabled")
+        val KEY_USER_CANDIDATES = booleanPreferencesKey("user_candidates_enabled")
 
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
@@ -55,6 +56,10 @@ class UserPreferences(private val context: Context) {
         prefs[KEY_SPECIAL_CODE] ?: true
     }
 
+    val userCandidatesEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_USER_CANDIDATES] ?: true
+    }
+
     suspend fun setKeyboardHeight(height: Float) {
         context.dataStore.edit { it[KEY_KEYBOARD_HEIGHT] = height }
     }
@@ -81,5 +86,10 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setSpecialCodeEnabled(enabled: Boolean) {
         context.dataStore.edit { it[KEY_SPECIAL_CODE] = enabled }
+    }
+
+
+    suspend fun setUserCandidatesEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_USER_CANDIDATES] = enabled }
     }
 }
