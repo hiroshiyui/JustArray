@@ -1,7 +1,7 @@
 package com.miyabi_hiroshi.app.justarray.ui.keyboard
 
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -11,17 +11,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun FunctionRow(
     isEnglishMode: Boolean,
+    enterLabel: String = "↵",
     onBackspace: () -> Unit,
     onSpace: () -> Unit,
     onEnter: () -> Unit,
@@ -54,9 +64,10 @@ fun FunctionRow(
             label = "⌫",
             modifier = Modifier.weight(1.2f),
             onClick = onBackspace,
+            onRepeat = onBackspace,
         )
         FunctionKey(
-            label = "↵",
+            label = enterLabel,
             modifier = Modifier.weight(1.2f),
             onClick = onEnter,
         )
@@ -64,24 +75,71 @@ fun FunctionRow(
 }
 
 @Composable
-private fun FunctionKey(
+internal fun FunctionKey(
     label: String,
     modifier: Modifier = Modifier,
+    onRepeat: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
+    val currentOnClick by rememberUpdatedState(onClick)
+    val currentOnRepeat by rememberUpdatedState(onRepeat)
+    var isPressed by remember { mutableStateOf(false) }
+    val scale = LocalKeyboardHeightScale.current
+    val colors = KeyboardTheme.current
+    val backgroundColor = if (isPressed) colors.keyPressedBackground else colors.functionKeyBackground
+
     Box(
         modifier = modifier
-            .height(KeyboardLayout.FUNCTION_KEY_HEIGHT)
-            .clip(RoundedCornerShape(6.dp))
-            .background(KeyboardTheme.current.functionKeyBackground)
-            .clickable(onClick = onClick),
+            .height(KeyboardLayout.FUNCTION_KEY_HEIGHT * scale)
+            .clip(RoundedCornerShape(20.dp))
+            .background(backgroundColor)
+            .pointerInput(Unit) {
+                coroutineScope {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            isPressed = true
+                            var longPressed = false
+
+                            val repeatJob = if (currentOnRepeat != null) {
+                                launch {
+                                    delay(400)
+                                    longPressed = true
+                                    while (true) {
+                                        currentOnRepeat?.invoke()
+                                        delay(50)
+                                    }
+                                }
+                            } else null
+
+                            // Wait for up or cancellation
+                            val released = try {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    if (event.changes.all { !it.pressed }) break
+                                }
+                                true
+                            } catch (_: Exception) {
+                                false
+                            }
+
+                            repeatJob?.cancel()
+                            isPressed = false
+
+                            if (!longPressed && released) {
+                                currentOnClick()
+                            }
+                        }
+                    }
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            color = KeyboardTheme.current.functionKeyTextColor,
+            color = colors.functionKeyTextColor,
         )
     }
 }

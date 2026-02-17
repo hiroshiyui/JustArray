@@ -37,7 +37,7 @@ fun JustArrayTheme(
         else -> LightColorScheme
     }
 
-    KeyboardThemeProvider(darkTheme = darkTheme) {
+    KeyboardThemeProvider(colorScheme = colorScheme) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,

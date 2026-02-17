@@ -1,6 +1,9 @@
 package com.miyabi_hiroshi.app.justarray.ui.keyboard
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.unit.dp
+
+val LocalKeyboardHeightScale = compositionLocalOf { 1.0f }
 
 data class KeyDefinition(
     val qwertyChar: Char,
@@ -11,9 +14,22 @@ data class KeyDefinition(
 
 object KeyboardLayout {
     val KEY_HEIGHT = 48.dp
-    val KEY_SPACING = 2.dp
-    val KEYBOARD_PADDING = 4.dp
+    val KEY_SPACING = 4.dp
+    val KEYBOARD_PADDING = 6.dp
     val FUNCTION_KEY_HEIGHT = 44.dp
+
+    val NUMBER_ROW = listOf(
+        KeyDefinition('1', "", "1"),
+        KeyDefinition('2', "", "2"),
+        KeyDefinition('3', "", "3"),
+        KeyDefinition('4', "", "4"),
+        KeyDefinition('5', "", "5"),
+        KeyDefinition('6', "", "6"),
+        KeyDefinition('7', "", "7"),
+        KeyDefinition('8', "", "8"),
+        KeyDefinition('9', "", "9"),
+        KeyDefinition('0', "", "0"),
+    )
 
     val TOP_ROW = listOf(
         KeyDefinition('q', "1↑", "Q"),

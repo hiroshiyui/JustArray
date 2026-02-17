@@ -10,6 +10,7 @@ class InputStateManager(
     private val onCommitText: (String) -> Unit,
     private val onSetComposingText: (String) -> Unit,
     private val onFinishComposing: () -> Unit,
+    private val onPerformEditorAction: (Int) -> Unit = {},
 ) {
     private val _state = MutableStateFlow<InputState>(InputState.Idle)
     val state: StateFlow<InputState> = _state.asStateFlow()
@@ -17,9 +18,52 @@ class InputStateManager(
     private val _candidates = MutableStateFlow<List<String>>(emptyList())
     val candidates: StateFlow<List<String>> = _candidates.asStateFlow()
 
+    private val _inputTypeClass = MutableStateFlow(0)
+    val inputTypeClass: StateFlow<Int> = _inputTypeClass.asStateFlow()
+
+    private val _imeAction = MutableStateFlow(0)
+    val imeAction: StateFlow<Int> = _imeAction.asStateFlow()
+
+    private var isPasswordField = false
+
+    fun updateInputTypeClass(inputType: Int) {
+        _inputTypeClass.value = inputType and 0x0000000f // TYPE_MASK_CLASS
+        // Detect password fields (TYPE_MASK_CLASS | TYPE_MASK_VARIATION)
+        val classAndVariation = inputType and 0x00000fff
+        isPasswordField = classAndVariation in setOf(
+            0x081, // TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_PASSWORD
+            0x091, // TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            0x0C1, // TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_WEB_PASSWORD
+            0x012, // TYPE_CLASS_NUMBER | TYPE_NUMBER_VARIATION_PASSWORD
+        )
+    }
+
+    fun updateImeOptions(imeOptions: Int) {
+        _imeAction.value = imeOptions and 0x000000ff // IME_MASK_ACTION
+    }
+
+    fun commitText(text: String) {
+        onCommitText(text)
+    }
+
     companion object {
         const val MAX_KEYS = 4
         const val CANDIDATES_PER_PAGE = 10
+    }
+
+    /** Clear the composing region without committing its content to the text field. */
+    private fun discardComposingText() {
+        onSetComposingText("")
+        onFinishComposing()
+    }
+
+    /** Update the composing region to show pre-edit buffer + 字根 labels inline in the text field. */
+    private fun updateComposingText(preEditBuffer: String, keys: String) {
+        val arrayLabels = if (keys.isNotEmpty()) KeyCode.toArrayLabels(keys) else ""
+        val composingText = preEditBuffer + arrayLabels
+        if (composingText.isNotEmpty()) {
+            onSetComposingText(composingText)
+        }
     }
 
     fun onArrayKey(qwertyChar: Char) {
@@ -27,28 +71,47 @@ class InputStateManager(
             is InputState.Idle -> {
                 val newKeys = qwertyChar.toString()
                 _state.value = InputState.Composing(keys = newKeys)
-                onSetComposingText(KeyCode.toArrayLabels(newKeys))
+                updateComposingText("", newKeys)
                 lookupCandidates(newKeys)
             }
             is InputState.Composing -> {
                 if (current.keys.length < MAX_KEYS) {
                     val newKeys = current.keys + qwertyChar
-                    _state.value = InputState.Composing(keys = newKeys)
-                    onSetComposingText(KeyCode.toArrayLabels(newKeys))
+                    _state.value = current.copy(keys = newKeys)
+                    updateComposingText(current.preEditBuffer, newKeys)
                     lookupCandidates(newKeys)
                 }
                 // If already at max keys, ignore additional keystrokes
             }
             is InputState.Selecting -> {
-                // Commit first candidate, then start new composition
-                commitCandidate(0)
+                // Add first candidate to pre-edit buffer, then start new composition
+                val firstCandidate = current.candidates.getOrNull(0) ?: ""
+                val newPreEdit = current.preEditBuffer + firstCandidate
+                if (firstCandidate.isNotEmpty()) {
+                    dictionaryRepository.incrementFrequency(current.keys, firstCandidate)
+                }
                 val newKeys = qwertyChar.toString()
-                _state.value = InputState.Composing(keys = newKeys)
-                onSetComposingText(KeyCode.toArrayLabels(newKeys))
+                _state.value = InputState.Composing(keys = newKeys, preEditBuffer = newPreEdit)
+                _candidates.value = emptyList()
+                updateComposingText(newPreEdit, newKeys)
                 lookupCandidates(newKeys)
             }
             is InputState.EnglishMode -> {
-                onCommitText(qwertyChar.toString())
+                if (isPasswordField) {
+                    onCommitText(qwertyChar.toString())
+                } else if (qwertyChar.isLetter()) {
+                    val newText = current.typedText + qwertyChar
+                    onSetComposingText(newText)
+                    val predictions = dictionaryRepository.englishPrefixLookup(newText)
+                    _state.value = current.copy(typedText = newText, candidates = predictions, page = 0)
+                } else {
+                    // Punctuation (;,./): commit pending text, then commit punctuation
+                    if (current.typedText.isNotEmpty()) {
+                        onFinishComposing()
+                    }
+                    onCommitText(qwertyChar.toString())
+                    _state.value = InputState.EnglishMode()
+                }
             }
             is InputState.SymbolMode -> {
                 // ignore array keys in symbol mode
@@ -59,31 +122,53 @@ class InputStateManager(
     fun onSpaceKey() {
         when (val current = _state.value) {
             is InputState.Composing -> {
-                // Trigger candidate selection
-                val candidateList = _candidates.value
-                if (candidateList.isNotEmpty()) {
-                    _state.value = InputState.Selecting(
-                        keys = current.keys,
-                        candidates = candidateList,
-                        page = 0
-                    )
-                    onSetComposingText(KeyCode.toArrayLabels(current.keys))
-                } else {
-                    // No candidates - beep or do nothing
+                if (current.keys.isNotEmpty()) {
+                    // Trigger candidate selection
+                    val candidateList = _candidates.value
+                    if (candidateList.size == 1) {
+                        // Single candidate — add to pre-edit buffer
+                        val selected = candidateList[0]
+                        val newPreEdit = current.preEditBuffer + selected
+                        dictionaryRepository.incrementFrequency(current.keys, selected)
+                        _state.value = InputState.Composing(keys = "", preEditBuffer = newPreEdit)
+                        _candidates.value = emptyList()
+                        updateComposingText(newPreEdit, "")
+                    } else if (candidateList.size > 1) {
+                        _state.value = InputState.Selecting(
+                            keys = current.keys,
+                            candidates = candidateList,
+                            page = 0,
+                            preEditBuffer = current.preEditBuffer,
+                        )
+                        updateComposingText(current.preEditBuffer, current.keys)
+                    } else {
+                        // No candidates - beep or do nothing
+                    }
+                } else if (current.preEditBuffer.isNotEmpty()) {
+                    // No composing keys — commit pre-edit buffer + space
+                    discardComposingText()
+                    onCommitText(current.preEditBuffer)
+                    onCommitText(" ")
+                    _state.value = InputState.Idle
+                    _candidates.value = emptyList()
                 }
             }
             is InputState.Selecting -> {
-                // Next page
-                val current2 = _state.value as InputState.Selecting
-                val maxPage = (current2.candidates.size - 1) / CANDIDATES_PER_PAGE
-                val nextPage = if (current2.page < maxPage) current2.page + 1 else 0
-                _state.value = current2.copy(page = nextPage)
+                nextPage()
             }
             is InputState.Idle -> {
                 onCommitText(" ")
             }
             is InputState.EnglishMode -> {
-                onCommitText(" ")
+                if (isPasswordField) {
+                    onCommitText(" ")
+                } else {
+                    if (current.typedText.isNotEmpty()) {
+                        onFinishComposing()
+                    }
+                    onCommitText(" ")
+                    _state.value = InputState.EnglishMode()
+                }
             }
             is InputState.SymbolMode -> {
                 // handled by symbol keyboard
@@ -94,22 +179,58 @@ class InputStateManager(
     fun onBackspaceKey() {
         when (val current = _state.value) {
             is InputState.Composing -> {
-                if (current.keys.length > 1) {
+                if (current.keys.isNotEmpty()) {
+                    // Delete last composing key
                     val newKeys = current.keys.dropLast(1)
-                    _state.value = InputState.Composing(keys = newKeys)
-                    onSetComposingText(KeyCode.toArrayLabels(newKeys))
-                    lookupCandidates(newKeys)
+                    if (newKeys.isNotEmpty()) {
+                        _state.value = current.copy(keys = newKeys)
+                        updateComposingText(current.preEditBuffer, newKeys)
+                        lookupCandidates(newKeys)
+                    } else if (current.preEditBuffer.isNotEmpty()) {
+                        // Removed last key but pre-edit buffer remains
+                        _state.value = InputState.Composing(keys = "", preEditBuffer = current.preEditBuffer)
+                        updateComposingText(current.preEditBuffer, "")
+                        _candidates.value = emptyList()
+                    } else {
+                        reset()
+                    }
+                } else if (current.preEditBuffer.isNotEmpty()) {
+                    // No keys — delete last character from pre-edit buffer
+                    val newPreEdit = current.preEditBuffer.dropLast(1)
+                    if (newPreEdit.isNotEmpty()) {
+                        _state.value = InputState.Composing(keys = "", preEditBuffer = newPreEdit)
+                        updateComposingText(newPreEdit, "")
+                    } else {
+                        reset()
+                    }
                 } else {
-                    reset()
+                    // Both empty
+                    onCommitText("\b")
                 }
             }
             is InputState.Selecting -> {
-                // Go back to composing
-                _state.value = InputState.Composing(keys = current.keys)
-                onSetComposingText(KeyCode.toArrayLabels(current.keys))
+                // Go back to composing, preserving pre-edit buffer
+                _state.value = InputState.Composing(keys = current.keys, preEditBuffer = current.preEditBuffer)
+                updateComposingText(current.preEditBuffer, current.keys)
             }
-            is InputState.Idle, is InputState.EnglishMode -> {
-                // Send backspace to editor
+            is InputState.EnglishMode -> {
+                if (isPasswordField) {
+                    onCommitText("\b")
+                } else if (current.typedText.isNotEmpty()) {
+                    val newText = current.typedText.dropLast(1)
+                    if (newText.isNotEmpty()) {
+                        onSetComposingText(newText)
+                        val predictions = dictionaryRepository.englishPrefixLookup(newText)
+                        _state.value = current.copy(typedText = newText, candidates = predictions, page = 0)
+                    } else {
+                        discardComposingText()
+                        _state.value = InputState.EnglishMode()
+                    }
+                } else {
+                    onCommitText("\b")
+                }
+            }
+            is InputState.Idle -> {
                 onCommitText("\b")
             }
             is InputState.SymbolMode -> {
@@ -121,15 +242,48 @@ class InputStateManager(
     fun onEnterKey() {
         when (val current = _state.value) {
             is InputState.Composing -> {
-                // Commit the raw keys as text
-                onFinishComposing()
-                reset()
+                // Commit pre-edit buffer (discard composing keys)
+                discardComposingText()
+                if (current.preEditBuffer.isNotEmpty()) {
+                    onCommitText(current.preEditBuffer)
+                }
+                _state.value = InputState.Idle
+                _candidates.value = emptyList()
             }
             is InputState.Selecting -> {
-                commitCandidate(0)
+                // Add first candidate to pre-edit, then commit all
+                val firstCandidate = current.candidates.getOrNull(0) ?: ""
+                val textToCommit = current.preEditBuffer + firstCandidate
+                if (firstCandidate.isNotEmpty()) {
+                    dictionaryRepository.incrementFrequency(current.keys, firstCandidate)
+                }
+                discardComposingText()
+                if (textToCommit.isNotEmpty()) {
+                    onCommitText(textToCommit)
+                }
+                _state.value = InputState.Idle
+                _candidates.value = emptyList()
+            }
+            is InputState.EnglishMode -> {
+                if (isPasswordField || current.typedText.isEmpty()) {
+                    val action = _imeAction.value
+                    if (action > 1) {
+                        onPerformEditorAction(action)
+                    } else {
+                        onCommitText("\n")
+                    }
+                } else {
+                    onFinishComposing()
+                    _state.value = InputState.EnglishMode()
+                }
             }
             else -> {
-                onCommitText("\n")
+                val action = _imeAction.value
+                if (action > 1) { // IME_ACTION_GO (2) and above
+                    onPerformEditorAction(action)
+                } else {
+                    onCommitText("\n")
+                }
             }
         }
     }
@@ -138,29 +292,116 @@ class InputStateManager(
         val current = _state.value
         if (current is InputState.Selecting) {
             val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
-            commitCandidate(absoluteIndex)
+            selectCandidate(absoluteIndex)
         }
     }
 
     fun onNumberKey(number: Int) {
+        when (val current = _state.value) {
+            is InputState.Selecting -> {
+                // 1-9 maps to indices 0-8, 0 maps to index 9
+                val index = if (number == 0) 9 else number - 1
+                val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
+                selectCandidate(absoluteIndex)
+            }
+            is InputState.Composing -> {
+                if (current.keys.isNotEmpty() && current.keys.length < MAX_KEYS) {
+                    // Append digit to composing keys (e.g. w1, w2 for symbols)
+                    val newKeys = current.keys + number.toString()
+                    _state.value = current.copy(keys = newKeys)
+                    updateComposingText(current.preEditBuffer, newKeys)
+                    lookupCandidates(newKeys)
+                } else {
+                    onCommitText(number.toString())
+                }
+            }
+            is InputState.EnglishMode -> {
+                if (isPasswordField) {
+                    onCommitText(number.toString())
+                } else if (current.candidates.isNotEmpty()) {
+                    val index = if (number == 0) 9 else number - 1
+                    val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
+                    if (absoluteIndex in current.candidates.indices) {
+                        val selected = current.candidates[absoluteIndex]
+                        discardComposingText()
+                        onCommitText(selected)
+                        onCommitText(" ")
+                        _state.value = InputState.EnglishMode()
+                    }
+                } else {
+                    if (current.typedText.isNotEmpty()) {
+                        onFinishComposing()
+                    }
+                    onCommitText(number.toString())
+                    _state.value = InputState.EnglishMode()
+                }
+            }
+            else -> {
+                onCommitText(number.toString())
+            }
+        }
+    }
+
+    fun nextPage() {
         val current = _state.value
         if (current is InputState.Selecting) {
-            // 1-9 maps to indices 0-8, 0 maps to index 9
-            val index = if (number == 0) 9 else number - 1
+            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
+            val nextPage = if (current.page < maxPage) current.page + 1 else 0
+            _state.value = current.copy(page = nextPage)
+        }
+    }
+
+    fun previousPage() {
+        val current = _state.value
+        if (current is InputState.Selecting) {
+            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
+            val prevPage = if (current.page > 0) current.page - 1 else maxPage
+            _state.value = current.copy(page = prevPage)
+        }
+    }
+
+    fun onEnglishCandidateSelected(index: Int) {
+        val current = _state.value
+        if (current is InputState.EnglishMode && current.candidates.isNotEmpty()) {
             val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
-            commitCandidate(absoluteIndex)
-        } else {
-            onCommitText(number.toString())
+            if (absoluteIndex in current.candidates.indices) {
+                val selected = current.candidates[absoluteIndex]
+                discardComposingText()
+                onCommitText(selected)
+                onCommitText(" ")
+                _state.value = InputState.EnglishMode()
+            }
+        }
+    }
+
+    fun englishNextPage() {
+        val current = _state.value
+        if (current is InputState.EnglishMode && current.candidates.isNotEmpty()) {
+            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
+            val nextPage = if (current.page < maxPage) current.page + 1 else 0
+            _state.value = current.copy(page = nextPage)
+        }
+    }
+
+    fun englishPreviousPage() {
+        val current = _state.value
+        if (current is InputState.EnglishMode && current.candidates.isNotEmpty()) {
+            val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
+            val prevPage = if (current.page > 0) current.page - 1 else maxPage
+            _state.value = current.copy(page = prevPage)
         }
     }
 
     fun toggleEnglishMode() {
-        _state.value = when (_state.value) {
-            is InputState.EnglishMode -> InputState.Idle
-            else -> {
-                reset()
-                InputState.EnglishMode
+        val current = _state.value
+        if (current is InputState.EnglishMode) {
+            if (current.typedText.isNotEmpty()) {
+                onFinishComposing()
             }
+            _state.value = InputState.Idle
+        } else {
+            reset()
+            _state.value = InputState.EnglishMode()
         }
     }
 
@@ -179,20 +420,40 @@ class InputStateManager(
     }
 
     fun reset() {
-        _state.value = InputState.Idle
-        _candidates.value = emptyList()
-        onFinishComposing()
+        val current = _state.value
+        when (current) {
+            is InputState.EnglishMode -> {
+                if (current.typedText.isNotEmpty()) {
+                    discardComposingText()
+                }
+                _state.value = InputState.Idle
+                return
+            }
+            else -> {
+                val preEdit = when (current) {
+                    is InputState.Composing -> current.preEditBuffer
+                    is InputState.Selecting -> current.preEditBuffer
+                    else -> ""
+                }
+                discardComposingText()
+                if (preEdit.isNotEmpty()) {
+                    onCommitText(preEdit)
+                }
+                _state.value = InputState.Idle
+                _candidates.value = emptyList()
+            }
+        }
     }
 
-    private fun commitCandidate(index: Int) {
+    private fun selectCandidate(index: Int) {
         val current = _state.value
         if (current is InputState.Selecting && index in current.candidates.indices) {
-            val text = current.candidates[index]
-            onFinishComposing()
-            onCommitText(text)
-            dictionaryRepository.incrementFrequency(current.keys, text)
-            _state.value = InputState.Idle
+            val selectedText = current.candidates[index]
+            val newPreEdit = current.preEditBuffer + selectedText
+            dictionaryRepository.incrementFrequency(current.keys, selectedText)
+            _state.value = InputState.Composing(keys = "", preEditBuffer = newPreEdit)
             _candidates.value = emptyList()
+            updateComposingText(newPreEdit, "")
         }
     }
 

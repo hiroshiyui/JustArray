@@ -24,14 +24,14 @@ object KeyCode {
         val botRow = "zxcvbnm,./"
         val labels = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
 
-        topRow.forEachIndexed { i, c ->
-            put(c, ArrayKey(c, "${labels[i]}↑", 0, i))
+        topRow.forEachIndexed { index, key ->
+            put(key, ArrayKey(key, "${labels[index]}↑", 0, index))
         }
-        midRow.forEachIndexed { i, c ->
-            put(c, ArrayKey(c, "${labels[i]}-", 1, i))
+        midRow.forEachIndexed { index, key ->
+            put(key, ArrayKey(key, "${labels[index]}-", 1, index))
         }
-        botRow.forEachIndexed { i, c ->
-            put(c, ArrayKey(c, "${labels[i]}↓", 2, i))
+        botRow.forEachIndexed { index, key ->
+            put(key, ArrayKey(key, "${labels[index]}↓", 2, index))
         }
     }
 

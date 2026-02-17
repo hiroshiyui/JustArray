@@ -36,6 +36,7 @@ fun SymbolKeyboard(
 ) {
     var selectedCategory by remember { mutableIntStateOf(0) }
     val categories = KeyboardLayout.SYMBOL_CATEGORIES
+    val scale = LocalKeyboardHeightScale.current
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Category tabs
@@ -64,7 +65,7 @@ fun SymbolKeyboard(
             columns = GridCells.Fixed(5),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
+                .height(160.dp * scale)
                 .padding(KeyboardLayout.KEYBOARD_PADDING),
             horizontalArrangement = Arrangement.spacedBy(KeyboardLayout.KEY_SPACING),
             verticalArrangement = Arrangement.spacedBy(KeyboardLayout.KEY_SPACING),
@@ -72,8 +73,8 @@ fun SymbolKeyboard(
             items(symbols) { symbol ->
                 Box(
                     modifier = Modifier
-                        .height(38.dp)
-                        .clip(RoundedCornerShape(6.dp))
+                        .height(38.dp * scale)
+                        .clip(RoundedCornerShape(12.dp))
                         .background(KeyboardTheme.current.keyBackground)
                         .clickable { onSymbolSelected(symbol) },
                     contentAlignment = Alignment.Center,

@@ -1,12 +1,24 @@
 package com.miyabi_hiroshi.app.justarray.ime
 
 import android.inputmethodservice.InputMethodService
+import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import androidx.compose.foundation.isSystemInDarkTheme
+import com.miyabi_hiroshi.app.justarray.data.prefs.UserPreferences
 import com.miyabi_hiroshi.app.justarray.ui.keyboard.KeyboardScreen
+import com.miyabi_hiroshi.app.justarray.ui.keyboard.LocalKeyboardHeightScale
 import com.miyabi_hiroshi.app.justarray.ui.theme.JustArrayTheme
 import com.miyabi_hiroshi.app.justarray.util.AppContainer
 import com.miyabi_hiroshi.app.justarray.util.HapticHelper
@@ -14,15 +26,18 @@ import com.miyabi_hiroshi.app.justarray.util.HapticHelper
 class JustArrayIME : InputMethodService() {
 
     private val lifecycleOwner = ImeLifecycleOwner()
+    private val scope = MainScope()
     private lateinit var inputStateManager: InputStateManager
     private lateinit var hapticHelper: HapticHelper
+    private lateinit var appContainer: AppContainer
+    private var vibrationEnabled = true
 
     override fun onCreate() {
         super.onCreate()
         lifecycleOwner.onCreate()
         hapticHelper = HapticHelper(this)
 
-        val appContainer = AppContainer.getInstance(applicationContext)
+        appContainer = AppContainer.getInstance(applicationContext)
         inputStateManager = InputStateManager(
             dictionaryRepository = appContainer.dictionaryRepository,
             onCommitText = { text ->
@@ -37,8 +52,17 @@ class JustArrayIME : InputMethodService() {
             },
             onFinishComposing = {
                 currentInputConnection?.finishComposingText()
+            },
+            onPerformEditorAction = { action ->
+                currentInputConnection?.performEditorAction(action)
             }
         )
+
+        scope.launch {
+            appContainer.userPreferences.vibrationEnabled.collectLatest { enabled ->
+                vibrationEnabled = enabled
+            }
+        }
     }
 
     override fun onCreateInputView(): View {
@@ -53,11 +77,45 @@ class JustArrayIME : InputMethodService() {
             setViewTreeLifecycleOwner(lifecycleOwner)
             setViewTreeSavedStateRegistryOwner(lifecycleOwner)
             setContent {
-                JustArrayTheme {
-                    KeyboardScreen(
-                        inputStateManager = inputStateManager,
-                        onKeyPress = { hapticHelper.vibrate() }
-                    )
+                val userPreferences = appContainer.userPreferences
+                val vibrationEnabled by userPreferences.vibrationEnabled
+                    .collectAsState(initial = true)
+                val showArrayLabels by userPreferences.showArrayLabels
+                    .collectAsState(initial = true)
+                val keyboardHeight by userPreferences.keyboardHeight
+                    .collectAsState(initial = 1.0f)
+                val shortCodeEnabled by userPreferences.shortCodeEnabled
+                    .collectAsState(initial = true)
+                val specialCodeEnabled by userPreferences.specialCodeEnabled
+                    .collectAsState(initial = true)
+                val userCandidatesEnabled by userPreferences.userCandidatesEnabled
+                    .collectAsState(initial = true)
+                val theme by userPreferences.theme
+                    .collectAsState(initial = UserPreferences.THEME_SYSTEM)
+                val darkTheme = when (theme) {
+                    UserPreferences.THEME_LIGHT -> false
+                    UserPreferences.THEME_DARK -> true
+                    else -> isSystemInDarkTheme()
+                }
+
+                LaunchedEffect(shortCodeEnabled) {
+                    appContainer.dictionaryRepository.useShortCodes = shortCodeEnabled
+                }
+                LaunchedEffect(specialCodeEnabled) {
+                    appContainer.dictionaryRepository.useSpecialCodes = specialCodeEnabled
+                }
+                LaunchedEffect(userCandidatesEnabled) {
+                    appContainer.dictionaryRepository.useUserCandidates = userCandidatesEnabled
+                }
+
+                CompositionLocalProvider(LocalKeyboardHeightScale provides keyboardHeight) {
+                    JustArrayTheme(darkTheme = darkTheme) {
+                        KeyboardScreen(
+                            inputStateManager = inputStateManager,
+                            showArrayLabels = showArrayLabels,
+                            onKeyPress = { if (vibrationEnabled) hapticHelper.vibrate() },
+                        )
+                    }
                 }
             }
         }
@@ -65,11 +123,61 @@ class JustArrayIME : InputMethodService() {
         return composeView
     }
 
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (event == null) return super.onKeyDown(keyCode, event)
+
+        val consumed = when (keyCode) {
+            KeyEvent.KEYCODE_SPACE -> {
+                inputStateManager.onSpaceKey()
+                true
+            }
+            KeyEvent.KEYCODE_DEL -> {
+                inputStateManager.onBackspaceKey()
+                true
+            }
+            KeyEvent.KEYCODE_ENTER -> {
+                inputStateManager.onEnterKey()
+                true
+            }
+            KeyEvent.KEYCODE_ESCAPE -> {
+                inputStateManager.reset()
+                true
+            }
+            in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9 -> {
+                val digit = keyCode - KeyEvent.KEYCODE_0
+                inputStateManager.onNumberKey(digit)
+                true
+            }
+            else -> {
+                val unicodeChar = event.unicodeChar
+                if (unicodeChar != 0) {
+                    val char = unicodeChar.toChar().lowercaseChar()
+                    if (KeyCode.getArrayKey(char) != null) {
+                        inputStateManager.onArrayKey(char)
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+        }
+
+        if (consumed) {
+            if (vibrationEnabled) hapticHelper.vibrate()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
     override fun onStartInput(info: EditorInfo?, restarting: Boolean) {
         super.onStartInput(info, restarting)
         if (!restarting) {
             inputStateManager.reset()
         }
+        inputStateManager.updateInputTypeClass(info?.inputType ?: 0)
+        inputStateManager.updateImeOptions(info?.imeOptions ?: 0)
     }
 
     override fun onFinishInput() {
@@ -88,6 +196,7 @@ class JustArrayIME : InputMethodService() {
     }
 
     override fun onDestroy() {
+        scope.cancel()
         lifecycleOwner.onDestroy()
         super.onDestroy()
     }
