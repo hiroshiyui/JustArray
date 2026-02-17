@@ -98,19 +98,25 @@ class InputStateManager(
             }
             is InputState.EnglishMode -> {
                 if (isPasswordField) {
-                    onCommitText(qwertyChar.toString())
+                    val ch = applyShift(qwertyChar, current.shiftState)
+                    onCommitText(ch.toString())
+                    if (current.shiftState == ShiftState.SHIFTED) {
+                        _state.value = current.copy(shiftState = ShiftState.NONE)
+                    }
                 } else if (qwertyChar.isLetter()) {
-                    val newText = current.typedText + qwertyChar
+                    val ch = applyShift(qwertyChar, current.shiftState)
+                    val newText = current.typedText + ch
                     onSetComposingText(newText)
                     val predictions = dictionaryRepository.englishPrefixLookup(newText)
-                    _state.value = current.copy(typedText = newText, candidates = predictions, page = 0)
+                    val newShift = if (current.shiftState == ShiftState.SHIFTED) ShiftState.NONE else current.shiftState
+                    _state.value = current.copy(typedText = newText, candidates = predictions, page = 0, shiftState = newShift)
                 } else {
                     // Punctuation (;,./): commit pending text, then commit punctuation
                     if (current.typedText.isNotEmpty()) {
                         onFinishComposing()
                     }
                     onCommitText(qwertyChar.toString())
-                    _state.value = InputState.EnglishMode()
+                    _state.value = InputState.EnglishMode(shiftState = current.shiftState)
                 }
             }
             is InputState.SymbolMode -> {
@@ -390,6 +396,42 @@ class InputStateManager(
             val prevPage = if (current.page > 0) current.page - 1 else maxPage
             _state.value = current.copy(page = prevPage)
         }
+    }
+
+    fun onShiftKey() {
+        val current = _state.value
+        if (current is InputState.EnglishMode) {
+            val next = when (current.shiftState) {
+                ShiftState.NONE -> ShiftState.SHIFTED
+                ShiftState.SHIFTED -> ShiftState.CAPS_LOCK
+                ShiftState.CAPS_LOCK -> ShiftState.NONE
+            }
+            _state.value = current.copy(shiftState = next)
+        }
+    }
+
+    fun onSwipeUpKey(qwertyChar: Char) {
+        when (val current = _state.value) {
+            is InputState.EnglishMode -> {
+                if (isPasswordField) {
+                    onCommitText(qwertyChar.uppercaseChar().toString())
+                } else {
+                    if (current.typedText.isNotEmpty()) {
+                        onFinishComposing()
+                        _state.value = InputState.EnglishMode(shiftState = current.shiftState)
+                    }
+                    onCommitText(qwertyChar.uppercaseChar().toString())
+                }
+            }
+            is InputState.Idle -> {
+                onCommitText(qwertyChar.uppercaseChar().toString())
+            }
+            else -> { /* ignored in other states */ }
+        }
+    }
+
+    private fun applyShift(char: Char, shiftState: ShiftState): Char {
+        return if (shiftState != ShiftState.NONE && char.isLetter()) char.uppercaseChar() else char
     }
 
     fun toggleEnglishMode() {

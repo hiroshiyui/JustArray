@@ -179,6 +179,10 @@ class JustArrayIME : InputMethodService() {
                 inputStateManager.reset()
                 true
             }
+            KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT -> {
+                inputStateManager.onShiftKey()
+                true
+            }
             in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9 -> {
                 val digit = keyCode - KeyEvent.KEYCODE_0
                 inputStateManager.onNumberKey(digit)

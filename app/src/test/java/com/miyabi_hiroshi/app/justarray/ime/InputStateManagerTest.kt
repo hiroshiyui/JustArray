@@ -327,6 +327,54 @@ class InputStateManagerTest {
         assertTrue(committed.contains(" "))
     }
 
+    // --- Shift key ---
+
+    @Test
+    fun `onShiftKey cycles NONE to SHIFTED to CAPS_LOCK to NONE`() {
+        manager.toggleEnglishMode()
+
+        manager.onShiftKey()
+        assertEquals(ShiftState.SHIFTED, (manager.state.value as InputState.EnglishMode).shiftState)
+
+        manager.onShiftKey()
+        assertEquals(ShiftState.CAPS_LOCK, (manager.state.value as InputState.EnglishMode).shiftState)
+
+        manager.onShiftKey()
+        assertEquals(ShiftState.NONE, (manager.state.value as InputState.EnglishMode).shiftState)
+    }
+
+    @Test
+    fun `SHIFTED mode auto-reverts to NONE after typing a letter`() {
+        manager.toggleEnglishMode()
+        manager.onShiftKey() // → SHIFTED
+
+        manager.onArrayKey('h')
+
+        val state = manager.state.value as InputState.EnglishMode
+        assertEquals("H", state.typedText)
+        assertEquals(ShiftState.NONE, state.shiftState)
+    }
+
+    @Test
+    fun `CAPS_LOCK stays active after typing letters`() {
+        manager.toggleEnglishMode()
+        manager.onShiftKey() // → SHIFTED
+        manager.onShiftKey() // → CAPS_LOCK
+
+        manager.onArrayKey('h')
+        manager.onArrayKey('i')
+
+        val state = manager.state.value as InputState.EnglishMode
+        assertEquals("HI", state.typedText)
+        assertEquals(ShiftState.CAPS_LOCK, state.shiftState)
+    }
+
+    @Test
+    fun `shift has no effect outside EnglishMode`() {
+        manager.onShiftKey() // in Idle, should do nothing
+        assertEquals(InputState.Idle, manager.state.value)
+    }
+
     // --- Symbol mode ---
 
     @Test

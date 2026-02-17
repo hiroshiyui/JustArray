@@ -18,6 +18,12 @@ object KeyboardLayout {
     val KEYBOARD_PADDING = 6.dp
     val FUNCTION_KEY_HEIGHT = 44.dp
 
+    // Landscape split keyboard
+    val LANDSCAPE_KEY_HEIGHT = 38.dp
+    val LANDSCAPE_FUNCTION_KEY_HEIGHT = 36.dp
+    val LANDSCAPE_CENTER_GAP = 20.dp
+    const val SPLIT_INDEX = 5  // split each row at index 5
+
     val NUMBER_ROW = listOf(
         KeyDefinition('1', "", "1"),
         KeyDefinition('2', "", "2"),
@@ -68,6 +74,18 @@ object KeyboardLayout {
         KeyDefinition(',', "8↓", ","),
         KeyDefinition('.', "9↓", "."),
         KeyDefinition('/', "0↓", "/"),
+    )
+
+    val KEY_ALTERNATES: Map<Char, List<String>> = mapOf(
+        'a' to listOf("à", "á", "â", "ã", "ä", "å", "æ"),
+        'e' to listOf("è", "é", "ê", "ë"),
+        'i' to listOf("ì", "í", "î", "ï"),
+        'o' to listOf("ò", "ó", "ô", "õ", "ö", "ø"),
+        'u' to listOf("ù", "ú", "û", "ü"),
+        'n' to listOf("ñ"),
+        'c' to listOf("ç"),
+        's' to listOf("ß"),
+        'y' to listOf("ý", "ÿ"),
     )
 
     val SYMBOL_CATEGORIES = listOf(

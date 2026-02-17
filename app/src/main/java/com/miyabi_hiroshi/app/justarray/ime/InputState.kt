@@ -1,5 +1,7 @@
 package com.miyabi_hiroshi.app.justarray.ime
 
+enum class ShiftState { NONE, SHIFTED, CAPS_LOCK }
+
 sealed interface InputState {
     data object Idle : InputState
 
@@ -19,6 +21,7 @@ sealed interface InputState {
         val typedText: String = "",
         val candidates: List<String> = emptyList(),
         val page: Int = 0,
+        val shiftState: ShiftState = ShiftState.NONE,
     ) : InputState
 
     data class SymbolMode(

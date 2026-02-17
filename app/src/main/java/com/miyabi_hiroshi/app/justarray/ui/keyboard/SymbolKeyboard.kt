@@ -36,6 +36,7 @@ import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 fun SymbolKeyboard(
     onSymbolSelected: (String) -> Unit,
     onBack: () -> Unit,
+    isLandscape: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var selectedCategory by remember { mutableIntStateOf(0) }
@@ -69,7 +70,7 @@ fun SymbolKeyboard(
             columns = GridCells.Fixed(5),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp * scale)
+                .height((if (isLandscape) 100.dp else 160.dp) * scale)
                 .padding(KeyboardLayout.KEYBOARD_PADDING),
             horizontalArrangement = Arrangement.spacedBy(KeyboardLayout.KEY_SPACING),
             verticalArrangement = Arrangement.spacedBy(KeyboardLayout.KEY_SPACING),

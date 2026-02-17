@@ -1,5 +1,6 @@
 package com.miyabi_hiroshi.app.justarray.ui.keyboard
 
+import android.content.res.Configuration
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
@@ -15,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +24,7 @@ import com.miyabi_hiroshi.app.justarray.R
 import com.miyabi_hiroshi.app.justarray.data.dictionary.DictLoadState
 import com.miyabi_hiroshi.app.justarray.ime.InputState
 import com.miyabi_hiroshi.app.justarray.ime.InputStateManager
+import com.miyabi_hiroshi.app.justarray.ime.ShiftState
 import com.miyabi_hiroshi.app.justarray.ui.candidate.CandidateBar
 import com.miyabi_hiroshi.app.justarray.ui.candidate.ClipboardSuggestion
 
@@ -41,6 +44,9 @@ fun KeyboardScreen(
     val candidates by inputStateManager.candidates.collectAsState()
     val inputTypeClass by inputStateManager.inputTypeClass.collectAsState()
     val imeAction by inputStateManager.imeAction.collectAsState()
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val isNumberField = inputTypeClass == InputType.TYPE_CLASS_NUMBER
             || inputTypeClass == InputType.TYPE_CLASS_PHONE
@@ -155,11 +161,13 @@ fun KeyboardScreen(
                             inputStateManager.onSymbolSelected(symbol)
                         },
                         onBack = { inputStateManager.toggleSymbolMode() },
+                        isLandscape = isLandscape,
                     )
                 }
                 else -> {
                     ArrayKeyboard(
                         showArrayLabels = showArrayLabels,
+                        isLandscape = isLandscape,
                         onKeyPress = { char ->
                             onKeyPress()
                             inputStateManager.onArrayKey(char)
@@ -168,6 +176,14 @@ fun KeyboardScreen(
                             onKeyPress()
                             inputStateManager.onNumberKey(digit)
                         },
+                        onSwipeUp = { char ->
+                            onKeyPress()
+                            inputStateManager.onSwipeUpKey(char)
+                        },
+                        onAlternateSelected = { alt ->
+                            onKeyPress()
+                            inputStateManager.commitText(alt)
+                        },
                     )
                 }
             }
@@ -175,8 +191,11 @@ fun KeyboardScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             // Function row
+            val shiftState = (state as? InputState.EnglishMode)?.shiftState ?: ShiftState.NONE
             FunctionRow(
                 isEnglishMode = state is InputState.EnglishMode,
+                shiftState = shiftState,
+                isLandscape = isLandscape,
                 enterLabel = enterLabel,
                 onBackspace = {
                     onKeyPress()
@@ -197,6 +216,10 @@ fun KeyboardScreen(
                 onToggleSymbol = {
                     onKeyPress()
                     inputStateManager.toggleSymbolMode()
+                },
+                onShift = {
+                    onKeyPress()
+                    inputStateManager.onShiftKey()
                 },
                 onSwitchIme = onSwitchIme,
             )

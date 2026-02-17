@@ -21,12 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import com.miyabi_hiroshi.app.justarray.ime.ShiftState
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -35,15 +37,19 @@ import kotlinx.coroutines.launch
 @Composable
 fun FunctionRow(
     isEnglishMode: Boolean,
+    shiftState: ShiftState = ShiftState.NONE,
+    isLandscape: Boolean = false,
     enterLabel: String = "↵",
     onBackspace: () -> Unit,
     onSpace: () -> Unit,
     onEnter: () -> Unit,
     onToggleEnglish: () -> Unit,
     onToggleSymbol: () -> Unit,
+    onShift: () -> Unit = {},
     onSwitchIme: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val functionKeyHeight: Dp? = if (isLandscape) KeyboardLayout.LANDSCAPE_FUNCTION_KEY_HEIGHT else null
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -53,30 +59,46 @@ fun FunctionRow(
         FunctionKey(
             label = if (isEnglishMode) "中" else "英",
             accessibilityLabel = "切換英文/中文",
+            keyHeight = functionKeyHeight,
             modifier = Modifier.weight(1.2f),
             onClick = onToggleEnglish,
         )
-        FunctionKey(
-            label = "符號",
-            accessibilityLabel = "符號",
-            modifier = Modifier.weight(1.2f),
-            onClick = onToggleSymbol,
-        )
+        if (isEnglishMode) {
+            FunctionKey(
+                label = if (shiftState == ShiftState.CAPS_LOCK) "⇪" else "⇧",
+                accessibilityLabel = "Shift",
+                isActive = shiftState != ShiftState.NONE,
+                keyHeight = functionKeyHeight,
+                modifier = Modifier.weight(1.2f),
+                onClick = onShift,
+            )
+        } else {
+            FunctionKey(
+                label = "符號",
+                accessibilityLabel = "符號",
+                keyHeight = functionKeyHeight,
+                modifier = Modifier.weight(1.2f),
+                onClick = onToggleSymbol,
+            )
+        }
         FunctionKey(
             label = "\uD83C\uDF10",
             accessibilityLabel = "切換輸入法",
+            keyHeight = functionKeyHeight,
             modifier = Modifier.weight(0.8f),
             onClick = onSwitchIme,
         )
         FunctionKey(
             label = "空白",
             accessibilityLabel = "空白鍵",
+            keyHeight = functionKeyHeight,
             modifier = Modifier.weight(2.4f),
             onClick = onSpace,
         )
         FunctionKey(
             label = "⌫",
             accessibilityLabel = "刪除",
+            keyHeight = functionKeyHeight,
             modifier = Modifier.weight(1.2f),
             onClick = onBackspace,
             onRepeat = onBackspace,
@@ -84,6 +106,7 @@ fun FunctionRow(
         FunctionKey(
             label = enterLabel,
             accessibilityLabel = "輸入/Enter",
+            keyHeight = functionKeyHeight,
             modifier = Modifier.weight(1.2f),
             onClick = onEnter,
         )
@@ -94,6 +117,8 @@ fun FunctionRow(
 internal fun FunctionKey(
     label: String,
     accessibilityLabel: String = label,
+    isActive: Boolean = false,
+    keyHeight: Dp? = null,
     modifier: Modifier = Modifier,
     onRepeat: (() -> Unit)? = null,
     onClick: () -> Unit,
@@ -103,11 +128,15 @@ internal fun FunctionKey(
     var isPressed by remember { mutableStateOf(false) }
     val scale = LocalKeyboardHeightScale.current
     val colors = KeyboardTheme.current
-    val backgroundColor = if (isPressed) colors.keyPressedBackground else colors.functionKeyBackground
+    val backgroundColor = when {
+        isPressed -> colors.keyPressedBackground
+        isActive -> colors.keyPressedBackground
+        else -> colors.functionKeyBackground
+    }
 
     Box(
         modifier = modifier
-            .height(KeyboardLayout.FUNCTION_KEY_HEIGHT * scale)
+            .height(keyHeight ?: (KeyboardLayout.FUNCTION_KEY_HEIGHT * scale))
             .clip(RoundedCornerShape(20.dp))
             .background(backgroundColor)
             .semantics {
