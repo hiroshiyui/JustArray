@@ -1,6 +1,5 @@
 package com.miyabi_hiroshi.app.justarray.ui.keyboard
 
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,12 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -32,9 +29,6 @@ import androidx.compose.ui.semantics.semantics
 import com.miyabi_hiroshi.app.justarray.R
 import com.miyabi_hiroshi.app.justarray.ime.ShiftState
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun FunctionRow(
@@ -125,8 +119,6 @@ internal fun FunctionKey(
     onRepeat: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
-    val currentOnClick by rememberUpdatedState(onClick)
-    val currentOnRepeat by rememberUpdatedState(onRepeat)
     var isPressed by remember { mutableStateOf(false) }
     val scale = LocalKeyboardHeightScale.current
     val colors = KeyboardTheme.current
@@ -145,46 +137,11 @@ internal fun FunctionKey(
                 contentDescription = accessibilityLabel
                 role = Role.Button
             }
-            .pointerInput(Unit) {
-                coroutineScope {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val down = awaitFirstDown(requireUnconsumed = false)
-                            isPressed = true
-                            var longPressed = false
-
-                            val repeatJob = if (currentOnRepeat != null) {
-                                launch {
-                                    delay(400)
-                                    longPressed = true
-                                    while (true) {
-                                        currentOnRepeat?.invoke()
-                                        delay(50)
-                                    }
-                                }
-                            } else null
-
-                            // Wait for up or cancellation
-                            val released = try {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    if (event.changes.all { !it.pressed }) break
-                                }
-                                true
-                            } catch (_: Exception) {
-                                false
-                            }
-
-                            repeatJob?.cancel()
-                            isPressed = false
-
-                            if (!longPressed && released) {
-                                currentOnClick()
-                            }
-                        }
-                    }
-                }
-            },
+            .keyPressGesture(
+                onClick = onClick,
+                onRepeat = onRepeat,
+                onPressedChange = { isPressed = it },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(

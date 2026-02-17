@@ -2,7 +2,6 @@ package com.miyabi_hiroshi.app.justarray.ui.keyboard
 
 import android.text.InputType
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,12 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,9 +28,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun NumberKeyboard(
@@ -161,8 +155,6 @@ private fun NumpadKey(
     onRepeat: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
-    val currentOnClick by rememberUpdatedState(onClick)
-    val currentOnRepeat by rememberUpdatedState(onRepeat)
     var isPressed by remember { mutableStateOf(false) }
     val colors = KeyboardTheme.current
     val backgroundColor = if (isPressed) colors.keyPressedBackground else colors.keyBackground
@@ -176,45 +168,11 @@ private fun NumpadKey(
                 contentDescription = label
                 role = Role.Button
             }
-            .pointerInput(Unit) {
-                coroutineScope {
-                    awaitPointerEventScope {
-                        while (true) {
-                            awaitFirstDown(requireUnconsumed = false)
-                            isPressed = true
-                            var longPressed = false
-
-                            val repeatJob = if (currentOnRepeat != null) {
-                                launch {
-                                    delay(400)
-                                    longPressed = true
-                                    while (true) {
-                                        currentOnRepeat?.invoke()
-                                        delay(50)
-                                    }
-                                }
-                            } else null
-
-                            val released = try {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    if (event.changes.all { !it.pressed }) break
-                                }
-                                true
-                            } catch (_: Exception) {
-                                false
-                            }
-
-                            repeatJob?.cancel()
-                            isPressed = false
-
-                            if (!longPressed && released) {
-                                currentOnClick()
-                            }
-                        }
-                    }
-                }
-            },
+            .keyPressGesture(
+                onClick = onClick,
+                onRepeat = onRepeat,
+                onPressedChange = { isPressed = it },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
