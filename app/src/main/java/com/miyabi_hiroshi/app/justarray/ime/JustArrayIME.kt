@@ -1,6 +1,8 @@
 package com.miyabi_hiroshi.app.justarray.ime
 
 import android.content.ClipboardManager
+import android.content.Context
+import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.view.KeyEvent
@@ -37,6 +39,20 @@ class JustArrayIME : InputMethodService() {
     private lateinit var appContainer: AppContainer
     private var vibrationEnabled = true
     private val clipboardText = MutableStateFlow<String?>(null)
+
+    override fun attachBaseContext(newBase: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val localeManager = newBase.getSystemService(android.app.LocaleManager::class.java)
+            val appLocales = localeManager?.applicationLocales
+            if (appLocales != null && !appLocales.isEmpty) {
+                val config = Configuration(newBase.resources.configuration)
+                config.setLocales(appLocales)
+                super.attachBaseContext(newBase.createConfigurationContext(config))
+                return
+            }
+        }
+        super.attachBaseContext(newBase)
+    }
 
     override fun onCreate() {
         super.onCreate()
