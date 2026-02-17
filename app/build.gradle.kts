@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    jacoco
 }
 
 android {
@@ -24,8 +25,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -34,7 +38,12 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+}
+
+base {
+    archivesName = "JustArray-${android.defaultConfig.versionName}"
 }
 
 val downloadCinFiles by tasks.registering {
@@ -71,6 +80,32 @@ tasks.named("preBuild") {
     dependsOn(downloadCinFiles)
 }
 
+afterEvaluate {
+    tasks.named("assembleDebug") {
+        dependsOn("testDebugUnitTest")
+    }
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    val kotlinClasses = fileTree("build/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes") {
+        exclude(
+            "**/R.class",
+            "**/R$*.class",
+            "**/BuildConfig.*",
+            "**/*_Impl*",          // Room generated
+            "**/*_Factory*",       // Room generated
+        )
+    }
+    classDirectories.setFrom(kotlinClasses)
+    sourceDirectories.setFrom("src/main/java")
+    executionData.setFrom("build/jacoco/testDebugUnitTest.exec")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -90,8 +125,12 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    // Logging
+    implementation(libs.timber)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
