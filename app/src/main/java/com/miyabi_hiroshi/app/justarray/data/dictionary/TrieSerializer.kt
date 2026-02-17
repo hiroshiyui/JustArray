@@ -8,6 +8,8 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 
 object TrieSerializer {
     private const val MAIN_TRIE_FILE = "main_trie.dat"
@@ -74,20 +76,17 @@ object TrieSerializer {
         return if (file.exists()) file.readText() else null
     }
 
-    private fun save(context: Context, fileName: String, trie: ArrayTrie) {
-        val file = File(context.filesDir, fileName)
-        DataOutputStream(BufferedOutputStream(FileOutputStream(file))).use { dos ->
+    internal fun writeTo(outputStream: OutputStream, trie: ArrayTrie) {
+        DataOutputStream(BufferedOutputStream(outputStream)).use { dos ->
             dos.write(MAGIC)
             dos.writeInt(FORMAT_VERSION)
             writeNode(dos, trie.root)
         }
     }
 
-    private fun load(context: Context, fileName: String): ArrayTrie? {
-        val file = File(context.filesDir, fileName)
-        if (!file.exists()) return null
+    internal fun readFrom(inputStream: InputStream): ArrayTrie? {
         return try {
-            DataInputStream(BufferedInputStream(FileInputStream(file))).use { dis ->
+            DataInputStream(BufferedInputStream(inputStream)).use { dis ->
                 val header = ByteArray(MAGIC.size)
                 dis.readFully(header)
                 if (!header.contentEquals(MAGIC)) return null
@@ -100,6 +99,17 @@ object TrieSerializer {
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun save(context: Context, fileName: String, trie: ArrayTrie) {
+        val file = File(context.filesDir, fileName)
+        writeTo(FileOutputStream(file), trie)
+    }
+
+    private fun load(context: Context, fileName: String): ArrayTrie? {
+        val file = File(context.filesDir, fileName)
+        if (!file.exists()) return null
+        return readFrom(FileInputStream(file))
     }
 
     private fun writeNode(dos: DataOutputStream, node: TrieNode) {
