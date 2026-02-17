@@ -13,6 +13,7 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_show_array_labels">Show Array Labels</string>
+    <string name="settings_show_reverse_codes">Show Array codes in candidates</string>
 
     <string name="settings_short_code">Enable Short Codes</string>
     <string name="settings_special_code">Enable Special Codes</string>

@@ -501,6 +501,9 @@ class InputStateManager(
         }
     }
 
+    fun reverseLookup(character: String): String? =
+        dictionaryRepository.reverseLookup(character)
+
     private fun lookupCandidates(keys: String) {
         val results = dictionaryRepository.lookup(keys)
         _candidates.value = results

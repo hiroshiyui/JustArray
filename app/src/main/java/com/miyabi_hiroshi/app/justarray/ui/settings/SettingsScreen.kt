@@ -56,6 +56,7 @@ fun SettingsScreen(
     val sound by userPreferences.soundEnabled.collectAsState(initial = false)
     val theme by userPreferences.theme.collectAsState(initial = UserPreferences.THEME_SYSTEM)
     val showArrayLabels by userPreferences.showArrayLabels.collectAsState(initial = true)
+    val showReverseCodes by userPreferences.showReverseCodes.collectAsState(initial = false)
     val shortCode by userPreferences.shortCodeEnabled.collectAsState(initial = true)
     val specialCode by userPreferences.specialCodeEnabled.collectAsState(initial = true)
     val userCandidates by userPreferences.userCandidatesEnabled.collectAsState(initial = true)
@@ -139,6 +140,13 @@ fun SettingsScreen(
             label = stringResource(R.string.settings_show_array_labels),
             checked = showArrayLabels,
             onCheckedChange = { scope.launch { userPreferences.setShowArrayLabels(it) } },
+        )
+
+        // Show reverse codes in candidates
+        SettingsSwitch(
+            label = stringResource(R.string.settings_show_reverse_codes),
+            checked = showReverseCodes,
+            onCheckedChange = { scope.launch { userPreferences.setShowReverseCodes(it) } },
         )
 
         // Short codes

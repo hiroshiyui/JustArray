@@ -40,12 +40,27 @@ class DictionaryRepository(
     var useSpecialCodes: Boolean = true
     var useUserCandidates: Boolean = true
 
+    private var reverseMap: Map<String, List<String>> = emptyMap()
+
     fun setTries(main: ArrayTrie, short: ArrayTrie, special: ArrayTrie) {
         mainTrie = main
         shortTrie = short
         specialTrie = special
+        buildReverseMap()
         _loadState.value = DictLoadState.Loaded
     }
+
+    private fun buildReverseMap() {
+        val map = HashMap<String, MutableList<String>>()
+        for ((code, char) in mainTrie.allEntries()) {
+            map.getOrPut(char) { mutableListOf() }.add(code)
+        }
+        for (list in map.values) list.sortBy { it.length }
+        reverseMap = map
+    }
+
+    fun reverseLookup(character: String): String? =
+        reverseMap[character]?.firstOrNull()
 
     fun setEnglishTrie(trie: ArrayTrie) {
         englishTrie = trie

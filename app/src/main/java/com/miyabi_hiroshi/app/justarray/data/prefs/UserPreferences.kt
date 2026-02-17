@@ -22,6 +22,7 @@ class UserPreferences(private val context: Context) {
         val KEY_SHORT_CODE = booleanPreferencesKey("short_code_enabled")
         val KEY_SPECIAL_CODE = booleanPreferencesKey("special_code_enabled")
         val KEY_USER_CANDIDATES = booleanPreferencesKey("user_candidates_enabled")
+        val KEY_SHOW_REVERSE_CODES = booleanPreferencesKey("show_reverse_codes")
 
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
@@ -60,6 +61,10 @@ class UserPreferences(private val context: Context) {
         prefs[KEY_USER_CANDIDATES] ?: true
     }
 
+    val showReverseCodes: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_SHOW_REVERSE_CODES] ?: false
+    }
+
     suspend fun setKeyboardHeight(height: Float) {
         context.dataStore.edit { it[KEY_KEYBOARD_HEIGHT] = height }
     }
@@ -91,5 +96,9 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setUserCandidatesEnabled(enabled: Boolean) {
         context.dataStore.edit { it[KEY_USER_CANDIDATES] = enabled }
+    }
+
+    suspend fun setShowReverseCodes(show: Boolean) {
+        context.dataStore.edit { it[KEY_SHOW_REVERSE_CODES] = show }
     }
 }

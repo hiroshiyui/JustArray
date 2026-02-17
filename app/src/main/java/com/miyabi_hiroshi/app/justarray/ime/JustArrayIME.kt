@@ -108,6 +108,8 @@ class JustArrayIME : InputMethodService() {
                     .collectAsState(initial = true)
                 val showArrayLabels by userPreferences.showArrayLabels
                     .collectAsState(initial = true)
+                val showReverseCodes by userPreferences.showReverseCodes
+                    .collectAsState(initial = false)
                 val keyboardHeight by userPreferences.keyboardHeight
                     .collectAsState(initial = 1.0f)
                 val shortCodeEnabled by userPreferences.shortCodeEnabled
@@ -143,6 +145,7 @@ class JustArrayIME : InputMethodService() {
                         KeyboardScreen(
                             inputStateManager = inputStateManager,
                             showArrayLabels = showArrayLabels,
+                            showReverseCodes = showReverseCodes,
                             dictLoadState = dictLoadState,
                             clipboardText = clipboard,
                             onKeyPress = { if (vibrationEnabled) hapticHelper.vibrate() },

@@ -52,6 +52,7 @@ private fun paginate(allCandidates: List<String>, page: Int): CandidatePage {
 fun CandidateBar(
     candidates: List<String>,
     page: Int,
+    reverseCodes: Map<String, String> = emptyMap(),
     onCandidateSelected: (Int) -> Unit,
     onPreviousPage: () -> Unit,
     onNextPage: () -> Unit,
@@ -77,6 +78,7 @@ fun CandidateBar(
                 CandidateItem(
                     index = index,
                     candidate = candidate,
+                    code = reverseCodes[candidate],
                     onSelected = { onCandidateSelected(index) },
                 )
             }
@@ -155,6 +157,7 @@ private fun PageNavigator(
 private fun CandidateItem(
     index: Int,
     candidate: String,
+    code: String? = null,
     onSelected: () -> Unit,
 ) {
     val numberLabel = if (index == 9) "0" else "${index + 1}"
@@ -186,6 +189,13 @@ private fun CandidateItem(
                 fontWeight = FontWeight.Medium,
                 color = KeyboardTheme.current.candidateTextColor,
             )
+            if (code != null) {
+                Text(
+                    text = code,
+                    fontSize = 9.sp,
+                    color = KeyboardTheme.current.candidateNumberColor,
+                )
+            }
         }
     }
 }

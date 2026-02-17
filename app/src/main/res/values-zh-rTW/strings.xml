@@ -13,6 +13,7 @@
     <string name="settings_theme_light">淺色</string>
     <string name="settings_theme_dark">深色</string>
     <string name="settings_show_array_labels">顯示行列標籤</string>
+    <string name="settings_show_reverse_codes">在候選字顯示行列碼</string>
 
     <string name="settings_short_code">啟用簡碼</string>
     <string name="settings_special_code">啟用特別碼</string>

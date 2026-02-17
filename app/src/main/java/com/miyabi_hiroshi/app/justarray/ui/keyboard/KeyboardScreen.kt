@@ -29,6 +29,7 @@ import com.miyabi_hiroshi.app.justarray.R
 import com.miyabi_hiroshi.app.justarray.data.dictionary.DictLoadState
 import com.miyabi_hiroshi.app.justarray.ime.InputState
 import com.miyabi_hiroshi.app.justarray.ime.InputStateManager
+import com.miyabi_hiroshi.app.justarray.ime.KeyCode
 import com.miyabi_hiroshi.app.justarray.ime.ShiftState
 import com.miyabi_hiroshi.app.justarray.ui.candidate.CandidateBar
 import com.miyabi_hiroshi.app.justarray.ui.candidate.ClipboardSuggestion
@@ -39,6 +40,7 @@ import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 fun KeyboardScreen(
     inputStateManager: InputStateManager,
     showArrayLabels: Boolean = true,
+    showReverseCodes: Boolean = false,
     dictLoadState: DictLoadState = DictLoadState.Loaded,
     clipboardText: String? = null,
     onKeyPress: () -> Unit = {},
@@ -61,6 +63,25 @@ fun KeyboardScreen(
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val reverseCodes: Map<String, String> = if (showReverseCodes && state !is InputState.EnglishMode) {
+        val allCandidates = when (state) {
+            is InputState.Selecting -> (state as InputState.Selecting).candidates
+            is InputState.Composing -> candidates
+            else -> emptyList()
+        }
+        val currentPage = when (state) {
+            is InputState.Selecting -> (state as InputState.Selecting).page
+            is InputState.Composing -> (state as InputState.Composing).page
+            else -> 0
+        }
+        val pageCandidates = allCandidates.drop(currentPage * 10).take(10)
+        pageCandidates.mapNotNull { candidate ->
+            inputStateManager.reverseLookup(candidate)?.let { code ->
+                candidate to KeyCode.toArrayLabels(code)
+            }
+        }.toMap()
+    } else emptyMap()
 
     val isNumberField = inputTypeClass == InputType.TYPE_CLASS_NUMBER
             || inputTypeClass == InputType.TYPE_CLASS_PHONE
@@ -136,6 +157,7 @@ fun KeyboardScreen(
                         CandidateBar(
                             candidates = candidates,
                             page = composing.page,
+                            reverseCodes = reverseCodes,
                             onCandidateSelected = { index ->
                                 onKeyPress()
                                 inputStateManager.onCandidateSelected(index)
@@ -157,6 +179,7 @@ fun KeyboardScreen(
                     CandidateBar(
                         candidates = selecting.candidates,
                         page = selecting.page,
+                        reverseCodes = reverseCodes,
                         onCandidateSelected = { index ->
                             onKeyPress()
                             inputStateManager.onCandidateSelected(index)

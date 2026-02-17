@@ -41,5 +41,17 @@ class ArrayTrie {
         }
     }
 
+    fun allEntries(): Sequence<Pair<String, String>> =
+        collectAllEntries(root, "")
+
+    private fun collectAllEntries(node: TrieNode, prefix: String): Sequence<Pair<String, String>> = sequence {
+        for (value in node.values) {
+            yield(prefix to value)
+        }
+        for ((ch, child) in node.children) {
+            yieldAll(collectAllEntries(child, prefix + ch))
+        }
+    }
+
     val isEmpty: Boolean get() = root.children.isEmpty()
 }
