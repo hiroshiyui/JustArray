@@ -19,6 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import com.miyabi_hiroshi.app.justarray.ime.InputStateManager
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 import kotlin.math.ceil
@@ -100,7 +104,11 @@ private fun PageNavigator(
             modifier = Modifier
                 .width(32.dp)
                 .height(36.dp)
-                .clickable { onPreviousPage() },
+                .clickable { onPreviousPage() }
+                .semantics {
+                    contentDescription = "上一頁"
+                    role = Role.Button
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -113,12 +121,19 @@ private fun PageNavigator(
             text = "$currentPage/$totalPages",
             fontSize = 12.sp,
             color = KeyboardTheme.current.candidateNumberColor,
+            modifier = Modifier.semantics {
+                contentDescription = "第 $currentPage 頁，共 $totalPages 頁"
+            },
         )
         Box(
             modifier = Modifier
                 .width(32.dp)
                 .height(36.dp)
-                .clickable { onNextPage() },
+                .clickable { onNextPage() }
+                .semantics {
+                    contentDescription = "下一頁"
+                    role = Role.Button
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -142,7 +157,11 @@ private fun CandidateItem(
             .widthIn(min = 40.dp)
             .height(36.dp)
             .clickable { onSelected() }
-            .padding(horizontal = 6.dp),
+            .padding(horizontal = 6.dp)
+            .semantics {
+                contentDescription = "候選字 ${index + 1}: $candidate"
+                role = Role.Button
+            },
         contentAlignment = Alignment.Center,
     ) {
         Row(

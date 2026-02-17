@@ -10,6 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,7 +32,11 @@ fun ClipboardSuggestion(
             .height(40.dp)
             .background(KeyboardTheme.current.candidateBarBackground)
             .clickable { onPaste() }
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 8.dp)
+            .semantics {
+                contentDescription = "貼上剪貼簿內容"
+                role = Role.Button
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
