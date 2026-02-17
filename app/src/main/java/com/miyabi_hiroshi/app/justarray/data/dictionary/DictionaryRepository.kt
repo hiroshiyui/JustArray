@@ -6,8 +6,18 @@ import com.miyabi_hiroshi.app.justarray.data.db.DictionaryDao
 import com.miyabi_hiroshi.app.justarray.data.db.UserPhrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+sealed interface DictLoadState {
+    data object NotStarted : DictLoadState
+    data object Loading : DictLoadState
+    data object Loaded : DictLoadState
+    data class Error(val message: String) : DictLoadState
+}
 
 class DictionaryRepository(
     private val dao: DictionaryDao,
@@ -17,8 +27,14 @@ class DictionaryRepository(
     private var specialTrie: ArrayTrie = ArrayTrie(),
     private var englishTrie: ArrayTrie = ArrayTrie(),
 ) {
-    var isLoaded: Boolean = false
-        private set
+    private val _loadState = MutableStateFlow<DictLoadState>(DictLoadState.NotStarted)
+    val loadState: StateFlow<DictLoadState> = _loadState.asStateFlow()
+
+    val isLoaded: Boolean get() = _loadState.value is DictLoadState.Loaded
+
+    fun setLoadState(state: DictLoadState) {
+        _loadState.value = state
+    }
 
     var useShortCodes: Boolean = true
     var useSpecialCodes: Boolean = true
@@ -28,7 +44,7 @@ class DictionaryRepository(
         mainTrie = main
         shortTrie = short
         specialTrie = special
-        isLoaded = true
+        _loadState.value = DictLoadState.Loaded
     }
 
     fun setEnglishTrie(trie: ArrayTrie) {
@@ -128,7 +144,7 @@ class DictionaryRepository(
         dao.clearDictionary()
         dao.clearShortCodes()
         dao.clearSpecialCodes()
-        isLoaded = false
+        _loadState.value = DictLoadState.NotStarted
         DictionaryInitializer(context).initialize(this@DictionaryRepository, database)
     }
 }

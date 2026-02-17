@@ -108,10 +108,12 @@ class DictionaryRepositoryTest {
         val freshRepo = DictionaryRepository(dao = fakeDao, scope = TestScope())
 
         assertFalse(freshRepo.isLoaded)
+        assertTrue(freshRepo.loadState.value is DictLoadState.NotStarted)
 
         freshRepo.setTries(ArrayTrie(), ArrayTrie(), ArrayTrie())
 
         assertTrue(freshRepo.isLoaded)
+        assertTrue(freshRepo.loadState.value is DictLoadState.Loaded)
     }
 
     /** Minimal fake that satisfies the DictionaryDao interface for unit tests. */

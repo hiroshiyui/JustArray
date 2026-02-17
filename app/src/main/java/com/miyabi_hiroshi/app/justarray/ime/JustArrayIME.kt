@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import androidx.compose.foundation.isSystemInDarkTheme
+import com.miyabi_hiroshi.app.justarray.data.dictionary.DictLoadState
 import com.miyabi_hiroshi.app.justarray.data.prefs.UserPreferences
 import com.miyabi_hiroshi.app.justarray.ui.keyboard.KeyboardScreen
 import com.miyabi_hiroshi.app.justarray.ui.keyboard.LocalKeyboardHeightScale
@@ -134,12 +135,15 @@ class JustArrayIME : InputMethodService() {
                 }
 
                 val clipboard by clipboardText.collectAsState()
+                val dictLoadState by appContainer.dictionaryRepository.loadState
+                    .collectAsState()
 
                 CompositionLocalProvider(LocalKeyboardHeightScale provides keyboardHeight) {
                     JustArrayTheme(darkTheme = darkTheme) {
                         KeyboardScreen(
                             inputStateManager = inputStateManager,
                             showArrayLabels = showArrayLabels,
+                            dictLoadState = dictLoadState,
                             clipboardText = clipboard,
                             onKeyPress = { if (vibrationEnabled) hapticHelper.vibrate() },
                             onSwitchIme = { switchIme() },

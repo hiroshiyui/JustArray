@@ -3,15 +3,23 @@ package com.miyabi_hiroshi.app.justarray.ui.keyboard
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.miyabi_hiroshi.app.justarray.R
+import com.miyabi_hiroshi.app.justarray.data.dictionary.DictLoadState
 import com.miyabi_hiroshi.app.justarray.ime.InputState
 import com.miyabi_hiroshi.app.justarray.ime.InputStateManager
 import com.miyabi_hiroshi.app.justarray.ui.candidate.CandidateBar
@@ -23,6 +31,7 @@ import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 fun KeyboardScreen(
     inputStateManager: InputStateManager,
     showArrayLabels: Boolean = true,
+    dictLoadState: DictLoadState = DictLoadState.Loaded,
     clipboardText: String? = null,
     onKeyPress: () -> Unit = {},
     onSwitchIme: () -> Unit = {},
@@ -70,6 +79,37 @@ fun KeyboardScreen(
         } else {
             // Candidate bar
             when {
+                dictLoadState is DictLoadState.Loading || dictLoadState is DictLoadState.NotStarted -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .background(KeyboardTheme.current.candidateBarBackground),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.dict_loading),
+                            fontSize = 14.sp,
+                            color = KeyboardTheme.current.candidateTextColor,
+                        )
+                    }
+                }
+                dictLoadState is DictLoadState.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .background(KeyboardTheme.current.candidateBarBackground)
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = dictLoadState.message,
+                            fontSize = 12.sp,
+                            color = KeyboardTheme.current.candidateTextColor,
+                        )
+                    }
+                }
                 state is InputState.Selecting -> {
                     val selecting = state as InputState.Selecting
                     CandidateBar(
