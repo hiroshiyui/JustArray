@@ -23,6 +23,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -48,32 +52,38 @@ fun FunctionRow(
     ) {
         FunctionKey(
             label = if (isEnglishMode) "中" else "英",
+            accessibilityLabel = "切換英文/中文",
             modifier = Modifier.weight(1.2f),
             onClick = onToggleEnglish,
         )
         FunctionKey(
             label = "符號",
+            accessibilityLabel = "符號",
             modifier = Modifier.weight(1.2f),
             onClick = onToggleSymbol,
         )
         FunctionKey(
             label = "\uD83C\uDF10",
+            accessibilityLabel = "切換輸入法",
             modifier = Modifier.weight(0.8f),
             onClick = onSwitchIme,
         )
         FunctionKey(
             label = "空白",
+            accessibilityLabel = "空白鍵",
             modifier = Modifier.weight(2.4f),
             onClick = onSpace,
         )
         FunctionKey(
             label = "⌫",
+            accessibilityLabel = "刪除",
             modifier = Modifier.weight(1.2f),
             onClick = onBackspace,
             onRepeat = onBackspace,
         )
         FunctionKey(
             label = enterLabel,
+            accessibilityLabel = "輸入/Enter",
             modifier = Modifier.weight(1.2f),
             onClick = onEnter,
         )
@@ -83,6 +93,7 @@ fun FunctionRow(
 @Composable
 internal fun FunctionKey(
     label: String,
+    accessibilityLabel: String = label,
     modifier: Modifier = Modifier,
     onRepeat: (() -> Unit)? = null,
     onClick: () -> Unit,
@@ -99,6 +110,10 @@ internal fun FunctionKey(
             .height(KeyboardLayout.FUNCTION_KEY_HEIGHT * scale)
             .clip(RoundedCornerShape(20.dp))
             .background(backgroundColor)
+            .semantics {
+                contentDescription = accessibilityLabel
+                role = Role.Button
+            }
             .pointerInput(Unit) {
                 coroutineScope {
                     awaitPointerEventScope {

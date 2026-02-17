@@ -25,6 +25,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
@@ -33,6 +37,7 @@ import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 fun KeyButton(
     keyDef: KeyDefinition,
     showArrayLabel: Boolean = true,
+    accessibilityLabel: String = keyDef.displayChar,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -66,7 +71,11 @@ fun KeyButton(
                     onTap = { currentOnClick() },
                 )
             }
-            .padding(2.dp),
+            .padding(2.dp)
+            .semantics {
+                contentDescription = accessibilityLabel
+                role = Role.Button
+            },
         contentAlignment = Alignment.Center,
     ) {
         // Array label in top-left corner

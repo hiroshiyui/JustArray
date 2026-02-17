@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 
 @Composable
 fun ArrayKeyboard(
@@ -41,6 +45,7 @@ private fun NumberRow(
             KeyButton(
                 keyDef = key,
                 showArrayLabel = false,
+                accessibilityLabel = "數字 ${key.displayChar}",
                 modifier = Modifier.weight(1f),
                 onClick = { onNumberPress(digit) },
             )

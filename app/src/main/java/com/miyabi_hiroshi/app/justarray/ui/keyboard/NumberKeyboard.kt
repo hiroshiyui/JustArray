@@ -26,6 +26,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -168,6 +172,10 @@ private fun NumpadKey(
             .height(KeyboardLayout.KEY_HEIGHT * scale)
             .clip(RoundedCornerShape(12.dp))
             .background(backgroundColor)
+            .semantics {
+                contentDescription = label
+                role = Role.Button
+            }
             .pointerInput(Unit) {
                 coroutineScope {
                     awaitPointerEventScope {
