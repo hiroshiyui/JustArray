@@ -8,8 +8,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [DictionaryEntry::class, ShortCodeEntry::class, SpecialCodeEntry::class, UserCandidate::class, UserPhrase::class],
-    version = 3,
+    entities = [DictionaryEntry::class, ShortCodeEntry::class, SpecialCodeEntry::class, UserCandidate::class, UserPhrase::class, EnglishWordFrequency::class],
+    version = 4,
     exportSchema = false
 )
 abstract class ArrayDatabase : RoomDatabase() {
@@ -18,6 +18,17 @@ abstract class ArrayDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: ArrayDatabase? = null
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS english_word_frequencies (" +
+                        "word TEXT NOT NULL, " +
+                        "frequency INTEGER NOT NULL DEFAULT 0, " +
+                        "PRIMARY KEY(word))"
+                )
+            }
+        }
 
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -58,7 +69,7 @@ abstract class ArrayDatabase : RoomDatabase() {
                     context.applicationContext,
                     ArrayDatabase::class.java,
                     "array_dictionary.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { INSTANCE = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { INSTANCE = it }
             }
         }
     }

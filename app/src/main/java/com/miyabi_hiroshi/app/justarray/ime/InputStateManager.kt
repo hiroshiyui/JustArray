@@ -494,6 +494,7 @@ class InputStateManager(
     private fun selectEnglishCandidate(candidates: List<String>, absoluteIndex: Int) {
         if (absoluteIndex in candidates.indices) {
             val selected = candidates[absoluteIndex]
+            dictionaryRepository.incrementEnglishFrequency(selected.lowercase())
             discardComposingText()
             onCommitText(selected)
             onCommitText(" ")

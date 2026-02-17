@@ -42,6 +42,7 @@ class DictionaryRepository(
 
     private val cacheLock = Any()
     private val userCandidateCache = HashMap<String, MutableMap<String, Int>>()
+    private val englishFrequencyCache = HashMap<String, Int>()
 
     private var reverseMap: Map<String, List<String>> = emptyMap()
 
@@ -71,7 +72,43 @@ class DictionaryRepository(
 
     fun englishPrefixLookup(prefix: String, limit: Int = 50): List<String> {
         if (prefix.isEmpty()) return emptyList()
-        return englishTrie.prefixLookup(prefix.lowercase()).take(limit).toList()
+        val results = englishTrie.prefixLookup(prefix.lowercase()).take(limit).toList()
+        if (results.size <= 1) return results
+
+        val frequencyMap = synchronized(cacheLock) {
+            val uncached = results.filter { it.lowercase() !in englishFrequencyCache }
+            if (uncached.isNotEmpty()) {
+                try {
+                    val dbResults = dao.getEnglishWordFrequencies(uncached.map { it.lowercase() })
+                    for (entry in dbResults) {
+                        englishFrequencyCache[entry.word] = entry.frequency
+                    }
+                    for (word in uncached) {
+                        if (word.lowercase() !in englishFrequencyCache) {
+                            englishFrequencyCache[word.lowercase()] = 0
+                        }
+                    }
+                } catch (_: Exception) {
+                    // Non-critical
+                }
+            }
+            results.associateWith { englishFrequencyCache[it.lowercase()] ?: 0 }
+        }
+
+        return results.sortedByDescending { frequencyMap[it] ?: 0 }
+    }
+
+    fun incrementEnglishFrequency(word: String) {
+        synchronized(cacheLock) {
+            englishFrequencyCache[word] = (englishFrequencyCache[word] ?: 0) + 1
+        }
+        scope.launch(Dispatchers.IO) {
+            try {
+                dao.incrementEnglishWordFrequency(word)
+            } catch (_: Exception) {
+                // Non-critical operation
+            }
+        }
     }
 
     /**
@@ -148,10 +185,12 @@ class DictionaryRepository(
     fun clearUserCandidates() {
         synchronized(cacheLock) {
             userCandidateCache.clear()
+            englishFrequencyCache.clear()
         }
         scope.launch(Dispatchers.IO) {
             try {
                 dao.clearUserCandidates()
+                dao.clearEnglishWordFrequencies()
             } catch (_: Exception) {
                 // Non-critical operation
             }

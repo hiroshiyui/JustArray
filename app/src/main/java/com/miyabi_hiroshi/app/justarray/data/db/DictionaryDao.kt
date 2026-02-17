@@ -44,6 +44,16 @@ interface DictionaryDao {
     @Query("DELETE FROM user_candidates")
     fun clearUserCandidates()
 
+    // English word frequencies
+    @Query("SELECT * FROM english_word_frequencies WHERE word IN (:words)")
+    fun getEnglishWordFrequencies(words: List<String>): List<EnglishWordFrequency>
+
+    @Query("INSERT OR REPLACE INTO english_word_frequencies (word, frequency) VALUES (:word, COALESCE((SELECT frequency FROM english_word_frequencies WHERE word = :word), 0) + 1)")
+    fun incrementEnglishWordFrequency(word: String)
+
+    @Query("DELETE FROM english_word_frequencies")
+    fun clearEnglishWordFrequencies()
+
     @Query("DELETE FROM dictionary")
     fun clearDictionary()
 

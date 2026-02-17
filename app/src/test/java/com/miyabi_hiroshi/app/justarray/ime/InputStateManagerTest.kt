@@ -445,6 +445,9 @@ class InputStateManagerTest {
         override fun lookupUserCandidates(code: String) = emptyList<UserCandidate>()
         override fun incrementUserFrequency(code: String, character: String) {}
         override fun clearUserCandidates() {}
+        override fun getEnglishWordFrequencies(words: List<String>) = emptyList<EnglishWordFrequency>()
+        override fun incrementEnglishWordFrequency(word: String) {}
+        override fun clearEnglishWordFrequencies() {}
         override fun clearDictionary() {}
         override fun clearShortCodes() {}
         override fun clearSpecialCodes() {}
