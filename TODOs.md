@@ -10,7 +10,7 @@
 ## Keyboard UI
 
 - [ ] Extract shared pointer event handling from `KeyButton`, `FunctionKey`, `NumpadKey` into reusable gesture utility
-- [ ] Move hardcoded Chinese strings in keyboard UI (`前往`/`搜尋`/`傳送`/`符號`/`空白`/`刪除`/`英`/`中`/`返回` etc.) to `strings.xml`
+- [x] Move hardcoded Chinese strings in keyboard UI (`前往`/`搜尋`/`傳送`/`符號`/`空白`/`刪除`/`英`/`中`/`返回` etc.) to `strings.xml`
 - [ ] Add visual feedback when composing buffer is full (5th key silently ignored)
 - [ ] Show uppercase key labels when Shift/CapsLock is active in English mode
 

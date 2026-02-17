@@ -13,10 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.miyabi_hiroshi.app.justarray.R
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 
 @Composable
@@ -26,6 +28,7 @@ fun ClipboardSuggestion(
     modifier: Modifier = Modifier,
 ) {
     val displayText = if (text.length > 20) text.take(20) + "…" else text
+    val pasteDesc = stringResource(R.string.a11y_paste_clipboard)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -34,7 +37,7 @@ fun ClipboardSuggestion(
             .clickable { onPaste() }
             .padding(horizontal = 8.dp)
             .semantics {
-                contentDescription = "貼上剪貼簿內容"
+                contentDescription = pasteDesc
                 role = Role.Button
             },
         verticalAlignment = Alignment.CenterVertically,

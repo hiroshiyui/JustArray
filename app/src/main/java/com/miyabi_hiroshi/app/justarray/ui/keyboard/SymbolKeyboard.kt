@@ -27,9 +27,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.miyabi_hiroshi.app.justarray.R
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 
 @Composable
@@ -50,17 +52,17 @@ fun SymbolKeyboard(
             modifier = Modifier.fillMaxWidth(),
             edgePadding = 4.dp,
         ) {
-            categories.forEachIndexed { index, (name, _) ->
+            categories.forEachIndexed { index, (nameResId, _) ->
                 Tab(
                     selected = selectedCategory == index,
                     onClick = { selectedCategory = index },
-                    text = { Text(name, fontSize = 13.sp) },
+                    text = { Text(stringResource(nameResId), fontSize = 13.sp) },
                 )
             }
             Tab(
                 selected = false,
                 onClick = onBack,
-                text = { Text("返回", fontSize = 13.sp) },
+                text = { Text(stringResource(R.string.key_back), fontSize = 13.sp) },
             )
         }
 

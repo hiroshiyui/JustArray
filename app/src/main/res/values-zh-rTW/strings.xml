@@ -52,4 +52,37 @@
     <!-- Dictionary -->
     <string name="dict_loading">正在載入字典…</string>
     <string name="dict_not_found">找不到字典檔案，請將 .cin 檔案放入 assets 資料夾</string>
+
+    <!-- Keyboard keys -->
+    <string name="key_enter_go">前往</string>
+    <string name="key_enter_search">搜尋</string>
+    <string name="key_enter_send">傳送</string>
+    <string name="key_enter_next">下個</string>
+    <string name="key_enter_done">完成</string>
+    <string name="key_enter_previous">上個</string>
+    <string name="key_toggle_to_chinese">中</string>
+    <string name="key_toggle_to_english">英</string>
+    <string name="key_symbol">符號</string>
+    <string name="key_space">空白</string>
+    <string name="key_back">返回</string>
+
+    <!-- Accessibility -->
+    <string name="a11y_toggle_language">切換英文/中文</string>
+    <string name="a11y_shift">Shift</string>
+    <string name="a11y_symbol">符號</string>
+    <string name="a11y_switch_ime">切換輸入法</string>
+    <string name="a11y_space">空白鍵</string>
+    <string name="a11y_backspace">刪除</string>
+    <string name="a11y_enter">輸入/Enter</string>
+    <string name="a11y_previous_page">上一頁</string>
+    <string name="a11y_next_page">下一頁</string>
+    <string name="a11y_page_indicator">第 %1$d 頁，共 %2$d 頁</string>
+    <string name="a11y_candidate">候選字 %1$d: %2$s</string>
+    <string name="a11y_paste_clipboard">貼上剪貼簿內容</string>
+
+    <!-- Symbol categories -->
+    <string name="symbol_category_punctuation">標點</string>
+    <string name="symbol_category_brackets">括號</string>
+    <string name="symbol_category_symbols">符號</string>
+    <string name="symbol_category_numbers">數字</string>
 </resources>

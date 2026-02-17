@@ -52,12 +52,12 @@ fun KeyboardScreen(
             || inputTypeClass == InputType.TYPE_CLASS_PHONE
 
     val enterLabel = when (imeAction) {
-        EditorInfo.IME_ACTION_GO -> "前往"
-        EditorInfo.IME_ACTION_SEARCH -> "搜尋"
-        EditorInfo.IME_ACTION_SEND -> "傳送"
-        EditorInfo.IME_ACTION_NEXT -> "下個"
-        EditorInfo.IME_ACTION_DONE -> "完成"
-        EditorInfo.IME_ACTION_PREVIOUS -> "上個"
+        EditorInfo.IME_ACTION_GO -> stringResource(R.string.key_enter_go)
+        EditorInfo.IME_ACTION_SEARCH -> stringResource(R.string.key_enter_search)
+        EditorInfo.IME_ACTION_SEND -> stringResource(R.string.key_enter_send)
+        EditorInfo.IME_ACTION_NEXT -> stringResource(R.string.key_enter_next)
+        EditorInfo.IME_ACTION_DONE -> stringResource(R.string.key_enter_done)
+        EditorInfo.IME_ACTION_PREVIOUS -> stringResource(R.string.key_enter_previous)
         else -> "↵"
     }
 

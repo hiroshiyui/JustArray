@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +29,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import com.miyabi_hiroshi.app.justarray.R
 import com.miyabi_hiroshi.app.justarray.ime.ShiftState
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 import kotlinx.coroutines.coroutineScope
@@ -57,8 +59,8 @@ fun FunctionRow(
         horizontalArrangement = Arrangement.spacedBy(KeyboardLayout.KEY_SPACING),
     ) {
         FunctionKey(
-            label = if (isEnglishMode) "中" else "英",
-            accessibilityLabel = "切換英文/中文",
+            label = if (isEnglishMode) stringResource(R.string.key_toggle_to_chinese) else stringResource(R.string.key_toggle_to_english),
+            accessibilityLabel = stringResource(R.string.a11y_toggle_language),
             keyHeight = functionKeyHeight,
             modifier = Modifier.weight(1.2f),
             onClick = onToggleEnglish,
@@ -66,7 +68,7 @@ fun FunctionRow(
         if (isEnglishMode) {
             FunctionKey(
                 label = if (shiftState == ShiftState.CAPS_LOCK) "⇪" else "⇧",
-                accessibilityLabel = "Shift",
+                accessibilityLabel = stringResource(R.string.a11y_shift),
                 isActive = shiftState != ShiftState.NONE,
                 keyHeight = functionKeyHeight,
                 modifier = Modifier.weight(1.2f),
@@ -74,8 +76,8 @@ fun FunctionRow(
             )
         } else {
             FunctionKey(
-                label = "符號",
-                accessibilityLabel = "符號",
+                label = stringResource(R.string.key_symbol),
+                accessibilityLabel = stringResource(R.string.a11y_symbol),
                 keyHeight = functionKeyHeight,
                 modifier = Modifier.weight(1.2f),
                 onClick = onToggleSymbol,
@@ -83,21 +85,21 @@ fun FunctionRow(
         }
         FunctionKey(
             label = "\uD83C\uDF10",
-            accessibilityLabel = "切換輸入法",
+            accessibilityLabel = stringResource(R.string.a11y_switch_ime),
             keyHeight = functionKeyHeight,
             modifier = Modifier.weight(0.8f),
             onClick = onSwitchIme,
         )
         FunctionKey(
-            label = "空白",
-            accessibilityLabel = "空白鍵",
+            label = stringResource(R.string.key_space),
+            accessibilityLabel = stringResource(R.string.a11y_space),
             keyHeight = functionKeyHeight,
             modifier = Modifier.weight(2.4f),
             onClick = onSpace,
         )
         FunctionKey(
             label = "⌫",
-            accessibilityLabel = "刪除",
+            accessibilityLabel = stringResource(R.string.a11y_backspace),
             keyHeight = functionKeyHeight,
             modifier = Modifier.weight(1.2f),
             onClick = onBackspace,
@@ -105,7 +107,7 @@ fun FunctionRow(
         )
         FunctionKey(
             label = enterLabel,
-            accessibilityLabel = "輸入/Enter",
+            accessibilityLabel = stringResource(R.string.a11y_enter),
             keyHeight = functionKeyHeight,
             modifier = Modifier.weight(1.2f),
             onClick = onEnter,

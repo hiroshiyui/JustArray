@@ -2,6 +2,7 @@ package com.miyabi_hiroshi.app.justarray.ui.keyboard
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.unit.dp
+import com.miyabi_hiroshi.app.justarray.R
 
 val LocalKeyboardHeightScale = compositionLocalOf { 1.0f }
 
@@ -88,14 +89,14 @@ object KeyboardLayout {
         'y' to listOf("ý", "ÿ"),
     )
 
-    val SYMBOL_CATEGORIES = listOf(
-        "標點" to listOf("，", "。", "、", "；", "：", "？", "！", "…", "—", "～",
+    val SYMBOL_CATEGORIES: List<Pair<Int, List<String>>> = listOf(
+        R.string.symbol_category_punctuation to listOf("，", "。", "、", "；", "：", "？", "！", "…", "—", "～",
             "「", "」", "『", "』", "（", "）", "【", "】", "《", "》"),
-        "括號" to listOf("（", "）", "「", "」", "『", "』", "【", "】", "〔", "〕",
+        R.string.symbol_category_brackets to listOf("（", "）", "「", "」", "『", "』", "【", "】", "〔", "〕",
             "《", "》", "〈", "〉", "﹁", "﹂", "﹃", "﹄", "{", "}"),
-        "符號" to listOf("＃", "＄", "％", "＆", "＊", "＋", "－", "＝", "＠", "＾",
+        R.string.symbol_category_symbols to listOf("＃", "＄", "％", "＆", "＊", "＋", "－", "＝", "＠", "＾",
             "｜", "＼", "／", "￥", "€", "£", "¥", "°", "§", "†"),
-        "數字" to listOf("０", "１", "２", "３", "４", "５", "６", "７", "８", "９",
+        R.string.symbol_category_numbers to listOf("０", "１", "２", "３", "４", "５", "６", "７", "８", "９",
             "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"),
     )
 }

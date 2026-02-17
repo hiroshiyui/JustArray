@@ -52,4 +52,37 @@
     <!-- Dictionary -->
     <string name="dict_loading">Loading dictionary…</string>
     <string name="dict_not_found">Dictionary files not found. Please place .cin files in the assets folder.</string>
+
+    <!-- Keyboard keys -->
+    <string name="key_enter_go">Go</string>
+    <string name="key_enter_search">Search</string>
+    <string name="key_enter_send">Send</string>
+    <string name="key_enter_next">Next</string>
+    <string name="key_enter_done">Done</string>
+    <string name="key_enter_previous">Prev</string>
+    <string name="key_toggle_to_chinese">中</string>
+    <string name="key_toggle_to_english">英</string>
+    <string name="key_symbol">Symbol</string>
+    <string name="key_space">Space</string>
+    <string name="key_back">Back</string>
+
+    <!-- Accessibility -->
+    <string name="a11y_toggle_language">Toggle Chinese/English</string>
+    <string name="a11y_shift">Shift</string>
+    <string name="a11y_symbol">Symbol</string>
+    <string name="a11y_switch_ime">Switch input method</string>
+    <string name="a11y_space">Space key</string>
+    <string name="a11y_backspace">Backspace</string>
+    <string name="a11y_enter">Enter</string>
+    <string name="a11y_previous_page">Previous page</string>
+    <string name="a11y_next_page">Next page</string>
+    <string name="a11y_page_indicator">Page %1$d of %2$d</string>
+    <string name="a11y_candidate">Candidate %1$d: %2$s</string>
+    <string name="a11y_paste_clipboard">Paste clipboard content</string>
+
+    <!-- Symbol categories -->
+    <string name="symbol_category_punctuation">Punct.</string>
+    <string name="symbol_category_brackets">Brackets</string>
+    <string name="symbol_category_symbols">Symbols</string>
+    <string name="symbol_category_numbers">Numbers</string>
 </resources>

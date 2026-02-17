@@ -17,12 +17,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import com.miyabi_hiroshi.app.justarray.R
 import com.miyabi_hiroshi.app.justarray.ime.InputStateManager
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 import kotlin.math.ceil
@@ -97,6 +99,10 @@ private fun PageNavigator(
     onPreviousPage: () -> Unit,
     onNextPage: () -> Unit,
 ) {
+    val prevPageDesc = stringResource(R.string.a11y_previous_page)
+    val nextPageDesc = stringResource(R.string.a11y_next_page)
+    val pageIndicatorDesc = stringResource(R.string.a11y_page_indicator, currentPage, totalPages)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -106,7 +112,7 @@ private fun PageNavigator(
                 .height(36.dp)
                 .clickable { onPreviousPage() }
                 .semantics {
-                    contentDescription = "上一頁"
+                    contentDescription = prevPageDesc
                     role = Role.Button
                 },
             contentAlignment = Alignment.Center,
@@ -122,7 +128,7 @@ private fun PageNavigator(
             fontSize = 12.sp,
             color = KeyboardTheme.current.candidateNumberColor,
             modifier = Modifier.semantics {
-                contentDescription = "第 $currentPage 頁，共 $totalPages 頁"
+                contentDescription = pageIndicatorDesc
             },
         )
         Box(
@@ -131,7 +137,7 @@ private fun PageNavigator(
                 .height(36.dp)
                 .clickable { onNextPage() }
                 .semantics {
-                    contentDescription = "下一頁"
+                    contentDescription = nextPageDesc
                     role = Role.Button
                 },
             contentAlignment = Alignment.Center,
@@ -152,6 +158,7 @@ private fun CandidateItem(
     onSelected: () -> Unit,
 ) {
     val numberLabel = if (index == 9) "0" else "${index + 1}"
+    val candidateDesc = stringResource(R.string.a11y_candidate, index + 1, candidate)
     Box(
         modifier = Modifier
             .widthIn(min = 40.dp)
@@ -159,7 +166,7 @@ private fun CandidateItem(
             .clickable { onSelected() }
             .padding(horizontal = 6.dp)
             .semantics {
-                contentDescription = "候選字 ${index + 1}: $candidate"
+                contentDescription = candidateDesc
                 role = Role.Button
             },
         contentAlignment = Alignment.Center,
