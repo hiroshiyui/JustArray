@@ -45,6 +45,7 @@ fun SettingsScreen(
     userPreferences: UserPreferences,
     dictionaryRepository: DictionaryRepository,
     database: ArrayDatabase,
+    onOpenUserDictionary: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -170,6 +171,16 @@ fun SettingsScreen(
             ) {
                 Text(text = stringResource(R.string.settings_clear_user_candidates))
             }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // User Dictionary
+        OutlinedButton(
+            onClick = onOpenUserDictionary,
+            modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+        ) {
+            Text(text = stringResource(R.string.settings_user_dictionary))
         }
 
         Spacer(modifier = Modifier.height(8.dp))

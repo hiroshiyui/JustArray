@@ -53,6 +53,19 @@ interface DictionaryDao {
     @Query("DELETE FROM special_codes")
     fun clearSpecialCodes()
 
+    // User phrases
+    @Query("SELECT * FROM user_phrases WHERE code = :code")
+    fun lookupUserPhrases(code: String): List<UserPhrase>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertUserPhrase(userPhrase: UserPhrase)
+
+    @Query("DELETE FROM user_phrases WHERE code = :code AND phrase = :phrase")
+    fun deleteUserPhrase(code: String, phrase: String)
+
+    @Query("SELECT * FROM user_phrases ORDER BY code")
+    fun getAllUserPhrases(): List<UserPhrase>
+
     // Utility
     @Query("SELECT COUNT(*) FROM dictionary")
     fun getDictionaryCount(): Int

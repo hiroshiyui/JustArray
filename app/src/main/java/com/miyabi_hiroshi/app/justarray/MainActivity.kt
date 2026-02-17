@@ -22,12 +22,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.miyabi_hiroshi.app.justarray.data.prefs.UserPreferences
 import com.miyabi_hiroshi.app.justarray.ui.settings.SettingsScreen
+import com.miyabi_hiroshi.app.justarray.ui.settings.UserDictionaryScreen
 import com.miyabi_hiroshi.app.justarray.ui.theme.JustArrayTheme
 import com.miyabi_hiroshi.app.justarray.util.AppContainer
 
@@ -62,6 +66,16 @@ private fun MainContent(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    var showUserDictionary by remember { mutableStateOf(false) }
+
+    if (showUserDictionary) {
+        UserDictionaryScreen(
+            dictionaryRepository = appContainer.dictionaryRepository,
+            onBack = { showUserDictionary = false },
+            modifier = modifier,
+        )
+        return
+    }
 
     Column(
         modifier = modifier
@@ -127,6 +141,7 @@ private fun MainContent(
             userPreferences = appContainer.userPreferences,
             dictionaryRepository = appContainer.dictionaryRepository,
             database = appContainer.database,
+            onOpenUserDictionary = { showUserDictionary = true },
         )
     }
 }

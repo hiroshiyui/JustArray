@@ -3,6 +3,7 @@ package com.miyabi_hiroshi.app.justarray.data.dictionary
 import android.content.Context
 import com.miyabi_hiroshi.app.justarray.data.db.ArrayDatabase
 import com.miyabi_hiroshi.app.justarray.data.db.DictionaryDao
+import com.miyabi_hiroshi.app.justarray.data.db.UserPhrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,6 +46,16 @@ class DictionaryRepository(
      */
     fun lookup(code: String): List<String> {
         val results = mutableListOf<String>()
+
+        // 0. User phrases (highest priority)
+        try {
+            val userPhrases = dao.lookupUserPhrases(code)
+            for (up in userPhrases) {
+                if (up.phrase !in results) results.add(up.phrase)
+            }
+        } catch (_: Exception) {
+            // Non-critical
+        }
 
         // 1. Special codes (always exact match)
         if (useSpecialCodes) {
@@ -98,6 +109,18 @@ class DictionaryRepository(
                 // Non-critical operation
             }
         }
+    }
+
+    suspend fun addUserPhrase(code: String, phrase: String) = withContext(Dispatchers.IO) {
+        dao.insertUserPhrase(UserPhrase(code = code, phrase = phrase))
+    }
+
+    suspend fun deleteUserPhrase(code: String, phrase: String) = withContext(Dispatchers.IO) {
+        dao.deleteUserPhrase(code, phrase)
+    }
+
+    suspend fun getAllUserPhrases(): List<UserPhrase> = withContext(Dispatchers.IO) {
+        dao.getAllUserPhrases()
     }
 
     suspend fun reimport(context: Context, database: ArrayDatabase) = withContext(Dispatchers.IO) {

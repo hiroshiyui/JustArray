@@ -23,6 +23,14 @@
     <string name="settings_dict_reimport_confirm">Re-parse dictionary files from assets? This may take a moment.</string>
     <string name="settings_dict_reimporting">Reimporting…</string>
 
+    <!-- User Dictionary -->
+    <string name="settings_user_dictionary">User Dictionary</string>
+    <string name="user_dict_add">Add</string>
+    <string name="user_dict_code_hint">Code (e.g. abc)</string>
+    <string name="user_dict_phrase_hint">Phrase (e.g. 你好)</string>
+    <string name="user_dict_empty">No custom phrases yet</string>
+    <string name="user_dict_delete_confirm">Delete \"%1$s\"?</string>
+
     <!-- About -->
     <string name="settings_about">About</string>
     <string name="settings_about_version">Version %1$s</string>

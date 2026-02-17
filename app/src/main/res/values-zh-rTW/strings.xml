@@ -23,6 +23,14 @@
     <string name="settings_dict_reimport_confirm">重新解析 assets 中的字典檔案？這可能需要一些時間。</string>
     <string name="settings_dict_reimporting">正在重新匯入…</string>
 
+    <!-- User Dictionary -->
+    <string name="settings_user_dictionary">使用者詞庫</string>
+    <string name="user_dict_add">新增</string>
+    <string name="user_dict_code_hint">編碼（如 abc）</string>
+    <string name="user_dict_phrase_hint">詞語（如 你好）</string>
+    <string name="user_dict_empty">尚無自訂詞語</string>
+    <string name="user_dict_delete_confirm">確定要刪除「%1$s」嗎？</string>
+
     <!-- About -->
     <string name="settings_about">關於</string>
     <string name="settings_about_version">版本 %1$s</string>

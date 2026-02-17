@@ -130,6 +130,10 @@ class DictionaryRepositoryTest {
         override fun clearDictionary() {}
         override fun clearShortCodes() {}
         override fun clearSpecialCodes() {}
+        override fun lookupUserPhrases(code: String) = emptyList<UserPhrase>()
+        override fun insertUserPhrase(userPhrase: UserPhrase) {}
+        override fun deleteUserPhrase(code: String, phrase: String) {}
+        override fun getAllUserPhrases() = emptyList<UserPhrase>()
         override fun getDictionaryCount() = 0
         override fun getShortCodeCount() = 0
         override fun getSpecialCodeCount() = 0
