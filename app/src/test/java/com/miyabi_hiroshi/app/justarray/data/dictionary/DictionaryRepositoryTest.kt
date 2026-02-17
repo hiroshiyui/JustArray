@@ -104,6 +104,62 @@ class DictionaryRepositoryTest {
     }
 
     @Test
+    fun `user phrases have highest priority`() {
+        fakeDao.userPhrases["de"] = listOf(UserPhrase(code = "de", phrase = "德"))
+
+        val results = repo.lookup("de")
+
+        // user phrase "德" first, then special "地", short "得", main "的"
+        assertEquals("德", results[0])
+        assertTrue(results.containsAll(listOf("德", "地", "得", "的")))
+    }
+
+    @Test
+    fun `user candidate frequency reorders results`() {
+        fakeDao.userCandidates["abc"] = listOf(
+            UserCandidate(code = "abc", character = "注", frequency = 5),
+            UserCandidate(code = "abc", character = "主", frequency = 2),
+        )
+
+        val results = repo.lookup("abc")
+
+        // frequency sort: 注(5) > 主(2) > 特(0)
+        assertEquals(listOf("注", "主", "特"), results)
+    }
+
+    @Test
+    fun `both short and special codes disabled returns only main results`() {
+        repo.useShortCodes = false
+        repo.useSpecialCodes = false
+
+        val results = repo.lookup("de")
+
+        assertEquals(listOf("的"), results)
+    }
+
+    @Test
+    fun `user candidates disabled skips frequency sorting`() {
+        repo.useUserCandidates = false
+        fakeDao.userCandidates["abc"] = listOf(
+            UserCandidate(code = "abc", character = "注", frequency = 10),
+        )
+
+        val results = repo.lookup("abc")
+
+        // Original order: special "特", main "主" then "注" (no frequency reordering)
+        assertEquals(listOf("特", "主", "注"), results)
+    }
+
+    @Test
+    fun `deduplication across all sources`() {
+        // "的" appears in both short and main tries
+        val results = repo.lookup("de")
+
+        val deCount = results.count { it == "的" }
+        assertEquals("的 should appear exactly once", 1, deCount)
+    }
+
+    @Test
     fun `isLoaded is false initially and true after setTries`() {
         val freshRepo = DictionaryRepository(dao = fakeDao, scope = TestScope())
 
@@ -116,8 +172,11 @@ class DictionaryRepositoryTest {
         assertTrue(freshRepo.loadState.value is DictLoadState.Loaded)
     }
 
-    /** Minimal fake that satisfies the DictionaryDao interface for unit tests. */
+    /** Fake that satisfies the DictionaryDao interface with configurable data for unit tests. */
     private class FakeDictionaryDao : DictionaryDao {
+        val userPhrases = HashMap<String, List<UserPhrase>>()
+        val userCandidates = HashMap<String, List<UserCandidate>>()
+
         override fun lookupExact(code: String) = emptyList<DictionaryEntry>()
         override fun lookupPrefix(prefix: String) = emptyList<DictionaryEntry>()
         override fun insertDictionaryEntries(entries: List<DictionaryEntry>) {}
@@ -126,7 +185,7 @@ class DictionaryRepositoryTest {
         override fun insertShortCodeEntries(entries: List<ShortCodeEntry>) {}
         override fun lookupSpecialCode(code: String) = emptyList<SpecialCodeEntry>()
         override fun insertSpecialCodeEntries(entries: List<SpecialCodeEntry>) {}
-        override fun lookupUserCandidates(code: String) = emptyList<UserCandidate>()
+        override fun lookupUserCandidates(code: String) = userCandidates[code] ?: emptyList()
         override fun incrementUserFrequency(code: String, character: String) {}
         override fun clearUserCandidates() {}
         override fun getEnglishWordFrequencies(words: List<String>) = emptyList<EnglishWordFrequency>()
@@ -135,7 +194,7 @@ class DictionaryRepositoryTest {
         override fun clearDictionary() {}
         override fun clearShortCodes() {}
         override fun clearSpecialCodes() {}
-        override fun lookupUserPhrases(code: String) = emptyList<UserPhrase>()
+        override fun lookupUserPhrases(code: String) = userPhrases[code] ?: emptyList()
         override fun insertUserPhrase(userPhrase: UserPhrase) {}
         override fun deleteUserPhrase(code: String, phrase: String) {}
         override fun getAllUserPhrases() = emptyList<UserPhrase>()
