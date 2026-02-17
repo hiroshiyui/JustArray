@@ -8,6 +8,7 @@ sealed interface InputState {
     data class Composing(
         val keys: String = "",           // accumulated QWERTY keystrokes (max 4)
         val preEditBuffer: String = "",  // selected candidates not yet committed
+        val page: Int = 0,              // candidate page for inline preview
     ) : InputState
 
     data class Selecting(

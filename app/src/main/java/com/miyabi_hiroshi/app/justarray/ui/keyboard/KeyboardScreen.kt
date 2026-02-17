@@ -116,6 +116,19 @@ fun KeyboardScreen(
                         )
                     }
                 }
+                state is InputState.Composing && candidates.isNotEmpty() -> {
+                    val composing = state as InputState.Composing
+                    CandidateBar(
+                        candidates = candidates,
+                        page = composing.page,
+                        onCandidateSelected = { index ->
+                            onKeyPress()
+                            inputStateManager.onComposingCandidateSelected(index)
+                        },
+                        onPreviousPage = { inputStateManager.composingPreviousPage() },
+                        onNextPage = { inputStateManager.composingNextPage() },
+                    )
+                }
                 state is InputState.Selecting -> {
                     val selecting = state as InputState.Selecting
                     CandidateBar(

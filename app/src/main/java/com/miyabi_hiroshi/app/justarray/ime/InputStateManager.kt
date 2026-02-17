@@ -77,7 +77,7 @@ class InputStateManager(
             is InputState.Composing -> {
                 if (current.keys.length < MAX_KEYS) {
                     val newKeys = current.keys + qwertyChar
-                    _state.value = current.copy(keys = newKeys)
+                    _state.value = current.copy(keys = newKeys, page = 0)
                     updateComposingText(current.preEditBuffer, newKeys)
                     lookupCandidates(newKeys)
                 }
@@ -189,7 +189,7 @@ class InputStateManager(
                     // Delete last composing key
                     val newKeys = current.keys.dropLast(1)
                     if (newKeys.isNotEmpty()) {
-                        _state.value = current.copy(keys = newKeys)
+                        _state.value = current.copy(keys = newKeys, page = 0)
                         updateComposingText(current.preEditBuffer, newKeys)
                         lookupCandidates(newKeys)
                     } else if (current.preEditBuffer.isNotEmpty()) {
@@ -361,6 +361,40 @@ class InputStateManager(
         val current = _state.value
         if (current is InputState.Selecting) {
             val maxPage = (current.candidates.size - 1) / CANDIDATES_PER_PAGE
+            val prevPage = if (current.page > 0) current.page - 1 else maxPage
+            _state.value = current.copy(page = prevPage)
+        }
+    }
+
+    fun onComposingCandidateSelected(index: Int) {
+        val current = _state.value
+        if (current is InputState.Composing) {
+            val candidateList = _candidates.value
+            val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
+            if (absoluteIndex in candidateList.indices) {
+                val selectedText = candidateList[absoluteIndex]
+                val newPreEdit = current.preEditBuffer + selectedText
+                dictionaryRepository.incrementFrequency(current.keys, selectedText)
+                _state.value = InputState.Composing(keys = "", preEditBuffer = newPreEdit)
+                _candidates.value = emptyList()
+                updateComposingText(newPreEdit, "")
+            }
+        }
+    }
+
+    fun composingNextPage() {
+        val current = _state.value
+        if (current is InputState.Composing) {
+            val maxPage = (_candidates.value.size - 1) / CANDIDATES_PER_PAGE
+            val nextPage = if (current.page < maxPage) current.page + 1 else 0
+            _state.value = current.copy(page = nextPage)
+        }
+    }
+
+    fun composingPreviousPage() {
+        val current = _state.value
+        if (current is InputState.Composing) {
+            val maxPage = (_candidates.value.size - 1) / CANDIDATES_PER_PAGE
             val prevPage = if (current.page > 0) current.page - 1 else maxPage
             _state.value = current.copy(page = prevPage)
         }
