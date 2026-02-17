@@ -12,7 +12,7 @@
 
 ## Dictionary & Performance
 
-- [ ] Use lazy `Sequence` + `take(limit)` in `ArrayTrie.prefixLookup()` to avoid collecting entire subtree for common English prefixes
+- [x] Use lazy `Sequence` + `take(limit)` in `ArrayTrie.prefixLookup()` to avoid collecting entire subtree for common English prefixes
 - [ ] Cache user candidate frequency map in memory to avoid Room DB hit on every keystroke lookup
 - [ ] Track English word usage frequency for better prediction ranking
 

@@ -26,21 +26,19 @@ class ArrayTrie {
         return node.values.toList()
     }
 
-    fun prefixLookup(prefix: String): List<String> {
+    fun prefixLookup(prefix: String): Sequence<String> {
         var node = root
         for (ch in prefix) {
-            node = node.children[ch] ?: return emptyList()
+            node = node.children[ch] ?: return emptySequence()
         }
         return collectAll(node)
     }
 
-    private fun collectAll(node: TrieNode): List<String> {
-        val result = mutableListOf<String>()
-        result.addAll(node.values)
+    private fun collectAll(node: TrieNode): Sequence<String> = sequence {
+        yieldAll(node.values)
         for (child in node.children.values) {
-            result.addAll(collectAll(child))
+            yieldAll(collectAll(child))
         }
-        return result
     }
 
     val isEmpty: Boolean get() = root.children.isEmpty()

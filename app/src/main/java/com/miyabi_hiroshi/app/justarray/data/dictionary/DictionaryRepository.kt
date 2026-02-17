@@ -53,7 +53,7 @@ class DictionaryRepository(
 
     fun englishPrefixLookup(prefix: String, limit: Int = 50): List<String> {
         if (prefix.isEmpty()) return emptyList()
-        return englishTrie.prefixLookup(prefix.lowercase()).take(limit)
+        return englishTrie.prefixLookup(prefix.lowercase()).take(limit).toList()
     }
 
     /**

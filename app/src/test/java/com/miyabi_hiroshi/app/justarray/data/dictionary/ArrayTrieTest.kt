@@ -53,7 +53,7 @@ class ArrayTrieTest {
         trie.insert("abd", "丙")
         trie.insert("abcd", "丁")
 
-        val results = trie.prefixLookup("ab")
+        val results = trie.prefixLookup("ab").toList()
 
         assertTrue("甲" in results)
         assertTrue("乙" in results)
@@ -66,7 +66,7 @@ class ArrayTrieTest {
     fun `prefixLookup nonexistent prefix returns empty list`() {
         trie.insert("abc", "字")
 
-        assertEquals(emptyList<String>(), trie.prefixLookup("xyz"))
+        assertEquals(emptyList<String>(), trie.prefixLookup("xyz").toList())
     }
 
     @Test
