@@ -40,6 +40,9 @@ class DictionaryRepository(
     var useSpecialCodes: Boolean = true
     var useUserCandidates: Boolean = true
 
+    private val cacheLock = Any()
+    private val userCandidateCache = HashMap<String, MutableMap<String, Int>>()
+
     private var reverseMap: Map<String, List<String>> = emptyMap()
 
     fun setTries(main: ArrayTrie, short: ArrayTrie, special: ArrayTrie) {
@@ -109,10 +112,16 @@ class DictionaryRepository(
 
         // Sort by user candidate frequency (stable sort preserves relative order for ties)
         if (useUserCandidates) {
-            val frequencyMap = try {
-                dao.lookupUserCandidates(code).associate { it.character to it.frequency }
-            } catch (_: Exception) {
-                emptyMap()
+            val frequencyMap = synchronized(cacheLock) {
+                userCandidateCache.getOrPut(code) {
+                    try {
+                        dao.lookupUserCandidates(code)
+                            .associate { it.character to it.frequency }
+                            .toMutableMap()
+                    } catch (_: Exception) {
+                        mutableMapOf()
+                    }
+                }
             }
             if (frequencyMap.isNotEmpty()) {
                 results.sortByDescending { frequencyMap[it] ?: 0 }
@@ -123,6 +132,10 @@ class DictionaryRepository(
     }
 
     fun incrementFrequency(code: String, character: String) {
+        synchronized(cacheLock) {
+            val codeMap = userCandidateCache.getOrPut(code) { mutableMapOf() }
+            codeMap[character] = (codeMap[character] ?: 0) + 1
+        }
         scope.launch(Dispatchers.IO) {
             try {
                 dao.incrementUserFrequency(code, character)
@@ -133,6 +146,9 @@ class DictionaryRepository(
     }
 
     fun clearUserCandidates() {
+        synchronized(cacheLock) {
+            userCandidateCache.clear()
+        }
         scope.launch(Dispatchers.IO) {
             try {
                 dao.clearUserCandidates()
