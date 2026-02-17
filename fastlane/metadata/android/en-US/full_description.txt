@@ -1,0 +1,26 @@
+JustArray is an Android Input Method Editor (IME) for the Array 30 Input Method (行列30輸入法). Requires Android 7.0 or later.
+
+Features:
+
+* Array 30 key layout with QWERTY mapping
+* Short code (簡碼) and special code (特別碼) support, toggleable in settings
+* Candidate selection with number keys and on-screen page navigation
+* Auto-select when only one candidate matches
+* Frequency-based candidate sorting (learns from usage)
+* Pre-edit buffer for continuous phrase input
+* User dictionary for custom code-phrase pairs
+* Symbol input with categorized panels
+* English/Chinese mode toggle with word prediction
+* Shift key for uppercase in English mode (one-shot and caps lock)
+* Long-press keys for accented character alternates
+* Swipe up on keys for quick uppercase input
+* Number/phone keypad for numeric input fields
+* Context-aware Enter key based on editor action
+* Clipboard paste preview in candidate bar
+* Physical keyboard support
+* IME switching key for multi-IME users
+* Light, dark, or system-following theme
+* Dynamic Material You theming (Android 12+)
+* Split keyboard layout in landscape orientation
+* Adjustable keyboard height
+* TalkBack accessibility support

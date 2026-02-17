@@ -1,0 +1,1 @@
+An Android IME for the Array 30 Input Method (行列30輸入法)

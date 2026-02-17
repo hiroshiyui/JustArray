@@ -1,0 +1,10 @@
+Initial release of JustArray (v0.0.4).
+
+* Array 30 key layout with short code and special code support
+* Auto-select single candidate, frequency-based sorting
+* Pre-edit buffer for continuous phrase input
+* English mode with word prediction and shift key
+* Symbol input with categorized panels
+* Light/dark/Material You theming
+* Split keyboard in landscape
+* TalkBack accessibility support

@@ -1,0 +1,29 @@
+Categories:
+  - Writing
+License: GPL-3.0-only
+AuthorName: YOU Hui-Hong
+AuthorEmail: hiroshi@miyabi-hiroshi.com
+SourceCode: https://github.com/hiroshiyui/JustArray
+IssueTracker: https://github.com/hiroshiyui/JustArray/issues
+
+AutoName: JustArray
+
+RepoType: git
+Repo: https://github.com/hiroshiyui/JustArray.git
+
+Builds:
+  - versionName: 0.0.4
+    versionCode: 1
+    commit: 0.0.4
+    subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-java-alternatives -a
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.0.4
+CurrentVersionCode: 1
