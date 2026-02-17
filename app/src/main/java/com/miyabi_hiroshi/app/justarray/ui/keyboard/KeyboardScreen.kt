@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.animation.core.Animatable
@@ -100,6 +101,7 @@ fun KeyboardScreen(
         modifier = Modifier
             .fillMaxWidth()
             .background(KeyboardTheme.current.keyboardBackground)
+            .navigationBarsPadding()
     ) {
         if (isNumberField) {
             NumberKeyboard(
