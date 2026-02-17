@@ -1,5 +1,6 @@
 package com.miyabi_hiroshi.app.justarray.ime
 
+import android.content.ClipboardManager
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.view.KeyEvent
@@ -8,6 +9,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.CompositionLocalProvider
@@ -33,6 +35,7 @@ class JustArrayIME : InputMethodService() {
     private lateinit var hapticHelper: HapticHelper
     private lateinit var appContainer: AppContainer
     private var vibrationEnabled = true
+    private val clipboardText = MutableStateFlow<String?>(null)
 
     override fun onCreate() {
         super.onCreate()
@@ -65,6 +68,14 @@ class JustArrayIME : InputMethodService() {
                 vibrationEnabled = enabled
             }
         }
+    }
+
+    private fun refreshClipboard() {
+        val cm = getSystemService(ClipboardManager::class.java)
+        val clip = cm?.primaryClip
+        clipboardText.value = if (clip != null && clip.itemCount > 0) {
+            clip.getItemAt(0).coerceToText(this)?.toString()?.takeIf { it.isNotBlank() }
+        } else null
     }
 
     private fun switchIme() {
@@ -122,13 +133,19 @@ class JustArrayIME : InputMethodService() {
                     appContainer.dictionaryRepository.useUserCandidates = userCandidatesEnabled
                 }
 
+                val clipboard by clipboardText.collectAsState()
+
                 CompositionLocalProvider(LocalKeyboardHeightScale provides keyboardHeight) {
                     JustArrayTheme(darkTheme = darkTheme) {
                         KeyboardScreen(
                             inputStateManager = inputStateManager,
                             showArrayLabels = showArrayLabels,
+                            clipboardText = clipboard,
                             onKeyPress = { if (vibrationEnabled) hapticHelper.vibrate() },
                             onSwitchIme = { switchIme() },
+                            onClipboardPaste = { text ->
+                                currentInputConnection?.commitText(text, 1)
+                            },
                         )
                     }
                 }
@@ -203,6 +220,7 @@ class JustArrayIME : InputMethodService() {
     override fun onWindowShown() {
         super.onWindowShown()
         lifecycleOwner.onResume()
+        refreshClipboard()
     }
 
     override fun onWindowHidden() {

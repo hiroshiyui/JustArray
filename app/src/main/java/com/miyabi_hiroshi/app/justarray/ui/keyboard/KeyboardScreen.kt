@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.miyabi_hiroshi.app.justarray.ime.InputState
 import com.miyabi_hiroshi.app.justarray.ime.InputStateManager
 import com.miyabi_hiroshi.app.justarray.ui.candidate.CandidateBar
+import com.miyabi_hiroshi.app.justarray.ui.candidate.ClipboardSuggestion
 
 import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 
@@ -22,8 +23,10 @@ import com.miyabi_hiroshi.app.justarray.ui.theme.KeyboardTheme
 fun KeyboardScreen(
     inputStateManager: InputStateManager,
     showArrayLabels: Boolean = true,
+    clipboardText: String? = null,
     onKeyPress: () -> Unit = {},
     onSwitchIme: () -> Unit = {},
+    onClipboardPaste: (String) -> Unit = {},
 ) {
     val state by inputStateManager.state.collectAsState()
     val candidates by inputStateManager.candidates.collectAsState()
@@ -91,6 +94,12 @@ fun KeyboardScreen(
                         },
                         onPreviousPage = { inputStateManager.englishPreviousPage() },
                         onNextPage = { inputStateManager.englishNextPage() },
+                    )
+                }
+                state is InputState.Idle && !clipboardText.isNullOrEmpty() -> {
+                    ClipboardSuggestion(
+                        text = clipboardText,
+                        onPaste = { onClipboardPaste(clipboardText) },
                     )
                 }
             }
