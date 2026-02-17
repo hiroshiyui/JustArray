@@ -123,7 +123,7 @@ fun KeyboardScreen(
                         page = composing.page,
                         onCandidateSelected = { index ->
                             onKeyPress()
-                            inputStateManager.onComposingCandidateSelected(index)
+                            inputStateManager.onCandidateSelected(index)
                         },
                         onPreviousPage = { inputStateManager.previousPage() },
                         onNextPage = { inputStateManager.nextPage() },
@@ -149,7 +149,7 @@ fun KeyboardScreen(
                         page = english.page,
                         onCandidateSelected = { index ->
                             onKeyPress()
-                            inputStateManager.onEnglishCandidateSelected(index)
+                            inputStateManager.onCandidateSelected(index)
                         },
                         onPreviousPage = { inputStateManager.previousPage() },
                         onNextPage = { inputStateManager.nextPage() },

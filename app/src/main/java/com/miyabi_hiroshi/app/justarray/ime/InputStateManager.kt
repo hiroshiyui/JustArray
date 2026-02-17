@@ -295,10 +295,20 @@ class InputStateManager(
     }
 
     fun onCandidateSelected(index: Int) {
-        val current = _state.value
-        if (current is InputState.Selecting) {
-            val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
-            selectCandidate(absoluteIndex)
+        when (val current = _state.value) {
+            is InputState.Selecting -> {
+                val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
+                selectArrayCandidate(current.candidates, absoluteIndex, current.keys, current.preEditBuffer)
+            }
+            is InputState.Composing -> {
+                val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
+                selectArrayCandidate(_candidates.value, absoluteIndex, current.keys, current.preEditBuffer)
+            }
+            is InputState.EnglishMode -> if (current.candidates.isNotEmpty()) {
+                val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
+                selectEnglishCandidate(current.candidates, absoluteIndex)
+            }
+            else -> {}
         }
     }
 
@@ -308,7 +318,7 @@ class InputStateManager(
                 // 1-9 maps to indices 0-8, 0 maps to index 9
                 val index = if (number == 0) 9 else number - 1
                 val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
-                selectCandidate(absoluteIndex)
+                selectArrayCandidate(current.candidates, absoluteIndex, current.keys, current.preEditBuffer)
             }
             is InputState.Composing -> {
                 if (current.keys.isNotEmpty() && current.keys.length < MAX_KEYS) {
@@ -327,13 +337,7 @@ class InputStateManager(
                 } else if (current.candidates.isNotEmpty()) {
                     val index = if (number == 0) 9 else number - 1
                     val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
-                    if (absoluteIndex in current.candidates.indices) {
-                        val selected = current.candidates[absoluteIndex]
-                        discardComposingText()
-                        onCommitText(selected)
-                        onCommitText(" ")
-                        _state.value = InputState.EnglishMode()
-                    }
+                    selectEnglishCandidate(current.candidates, absoluteIndex)
                 } else {
                     if (current.typedText.isNotEmpty()) {
                         onFinishComposing()
@@ -382,35 +386,6 @@ class InputStateManager(
         }
     }
 
-    fun onComposingCandidateSelected(index: Int) {
-        val current = _state.value
-        if (current is InputState.Composing) {
-            val candidateList = _candidates.value
-            val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
-            if (absoluteIndex in candidateList.indices) {
-                val selectedText = candidateList[absoluteIndex]
-                val newPreEdit = current.preEditBuffer + selectedText
-                dictionaryRepository.incrementFrequency(current.keys, selectedText)
-                _state.value = InputState.Composing(keys = "", preEditBuffer = newPreEdit)
-                _candidates.value = emptyList()
-                updateComposingText(newPreEdit, "")
-            }
-        }
-    }
-
-    fun onEnglishCandidateSelected(index: Int) {
-        val current = _state.value
-        if (current is InputState.EnglishMode && current.candidates.isNotEmpty()) {
-            val absoluteIndex = current.page * CANDIDATES_PER_PAGE + index
-            if (absoluteIndex in current.candidates.indices) {
-                val selected = current.candidates[absoluteIndex]
-                discardComposingText()
-                onCommitText(selected)
-                onCommitText(" ")
-                _state.value = InputState.EnglishMode()
-            }
-        }
-    }
 
     fun onShiftKey() {
         val current = _state.value
@@ -501,15 +476,24 @@ class InputStateManager(
         }
     }
 
-    private fun selectCandidate(index: Int) {
-        val current = _state.value
-        if (current is InputState.Selecting && index in current.candidates.indices) {
-            val selectedText = current.candidates[index]
-            val newPreEdit = current.preEditBuffer + selectedText
-            dictionaryRepository.incrementFrequency(current.keys, selectedText)
+    private fun selectArrayCandidate(candidates: List<String>, absoluteIndex: Int, keys: String, preEditBuffer: String) {
+        if (absoluteIndex in candidates.indices) {
+            val selectedText = candidates[absoluteIndex]
+            val newPreEdit = preEditBuffer + selectedText
+            dictionaryRepository.incrementFrequency(keys, selectedText)
             _state.value = InputState.Composing(keys = "", preEditBuffer = newPreEdit)
             _candidates.value = emptyList()
             updateComposingText(newPreEdit, "")
+        }
+    }
+
+    private fun selectEnglishCandidate(candidates: List<String>, absoluteIndex: Int) {
+        if (absoluteIndex in candidates.indices) {
+            val selected = candidates[absoluteIndex]
+            discardComposingText()
+            onCommitText(selected)
+            onCommitText(" ")
+            _state.value = InputState.EnglishMode()
         }
     }
 
