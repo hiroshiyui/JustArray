@@ -80,6 +80,38 @@ tasks.named("preBuild") {
     dependsOn(downloadCinFiles)
 }
 
+tasks.register("bumpPatchVersion") {
+    description = "Increments versionCode by 1 and versionName patch level (e.g. 0.0.5 -> 0.0.6)."
+    group = "versioning"
+
+    doLast {
+        val buildFile = layout.projectDirectory.file("build.gradle.kts").asFile
+        var text = buildFile.readText()
+
+        val codeRegex = Regex("""versionCode\s*=\s*(\d+)""")
+        val nameRegex = Regex("""versionName\s*=\s*"(\d+)\.(\d+)\.(\d+)"""")
+
+        val codeMatch = codeRegex.find(text) ?: error("versionCode not found")
+        val nameMatch = nameRegex.find(text) ?: error("versionName not found")
+
+        val oldCode = codeMatch.groupValues[1].toInt()
+        val major = nameMatch.groupValues[1]
+        val minor = nameMatch.groupValues[2]
+        val oldPatch = nameMatch.groupValues[3].toInt()
+
+        val newCode = oldCode + 1
+        val newName = "$major.$minor.${oldPatch + 1}"
+
+        text = text.replaceRange(codeMatch.range, "versionCode = $newCode")
+        // re-find after first replacement since offsets shifted
+        val nameMatch2 = nameRegex.find(text) ?: error("versionName not found after first replacement")
+        text = text.replaceRange(nameMatch2.range, """versionName = "$newName"""")
+
+        buildFile.writeText(text)
+        logger.lifecycle("Version bumped: versionCode $oldCode -> $newCode, versionName ${nameMatch.value} -> versionName = \"$newName\"")
+    }
+}
+
 afterEvaluate {
     tasks.named("assembleDebug") {
         dependsOn("testDebugUnitTest")
